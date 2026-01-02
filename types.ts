@@ -45,4 +45,6 @@ export interface CalculationResult {
   genderGapSupplement: number;
   reductionPercentage?: number;
   delayBonus?: number;
+  modality: RetirementModality;
+  anticipationMonths?: number;
 }

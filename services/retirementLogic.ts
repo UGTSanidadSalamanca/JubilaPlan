@@ -33,15 +33,16 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
   // 3. Aplicación de Modalidad y Adelantos/Retrasos
   let reductionPercentage = 0;
   let delayBonus = 0;
+  let actualAnticipation = 0;
 
   if (modality === RetirementModality.ANTICIPATED_VOLUNTARY) {
-    const months = Math.min(anticipationMonths, 24);
-    targetAge = subtractMonths(ordinaryAge, months);
-    reductionPercentage = (months / 24) * 0.21; 
+    actualAnticipation = Math.min(anticipationMonths, 24);
+    targetAge = subtractMonths(ordinaryAge, actualAnticipation);
+    reductionPercentage = (actualAnticipation / 24) * 0.21; 
   } else if (modality === RetirementModality.ANTICIPATED_INVOLUNTARY) {
-    const months = Math.min(anticipationMonths, 48);
-    targetAge = subtractMonths(ordinaryAge, months);
-    reductionPercentage = (months / 48) * 0.30;
+    actualAnticipation = Math.min(anticipationMonths, 48);
+    targetAge = subtractMonths(ordinaryAge, actualAnticipation);
+    reductionPercentage = (actualAnticipation / 48) * 0.30;
   } else if (modality === RetirementModality.DELAYED) {
     if (delayedYears && delayedYears > 0) {
       targetAge.years += delayedYears;
@@ -76,7 +77,6 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
   };
 
   // 5. CÁLCULO DE COTIZACIÓN FINAL PROYECTADA
-  // Calculamos los meses de cotización adicionales que sumará hasta el día de su jubilación
   const monthsToAdd = (rDate.getFullYear() - now.getFullYear()) * 12 + (rDate.getMonth() - now.getMonth());
   const totalFinalMonths = totalWorkedMonthsAtStart + Math.max(0, monthsToAdd);
   
@@ -86,12 +86,10 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
   };
 
   // 6. ESCALA DE PORCENTAJE SOBRE BASE REGULADORA
-  // Importante: Aplicamos la escala sobre la cotización FINAL, no la de hoy.
   let contributionPercentage = 0;
-  if (totalFinalMonths >= 180) { // 15 años mínimo para el 50%
+  if (totalFinalMonths >= 180) {
     contributionPercentage = 50;
     const additionalMonths = totalFinalMonths - 180;
-    // Escala progresiva hasta el 100% (36 años y 6 meses = 438 meses)
     const monthsNeededForFull = 438 - 180; 
     const percentageIncrement = (additionalMonths / monthsNeededForFull) * 50;
     contributionPercentage = Math.min(100, 50 + percentageIncrement);
@@ -110,7 +108,6 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
   const genderGapSupplement = children > 0 ? children * 38 : 0;
   const scaleMultiplier = contributionPercentage / 100;
 
-  // Cálculo final aplicando el multiplicador por años de cotización proyectados
   let finalPensionA = (baseReguladoraA * scaleMultiplier) * (1 - reductionPercentage) + (delayBonus * baseReguladoraA) + genderGapSupplement;
   let finalPensionB = (baseReguladoraB * scaleMultiplier) * (1 - reductionPercentage) + (delayBonus * baseReguladoraB) + genderGapSupplement;
 
@@ -131,7 +128,9 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
     bestOption: finalPensionB > finalPensionA ? 'B' : 'A',
     genderGapSupplement,
     reductionPercentage,
-    delayBonus
+    delayBonus,
+    modality,
+    anticipationMonths: actualAnticipation
   };
 };
 
@@ -159,5 +158,6 @@ const createBlockedResult = (userName: string, reason: string): CalculationResul
   finalPensionA: 0,
   finalPensionB: 0,
   bestOption: 'A',
-  genderGapSupplement: 0
+  genderGapSupplement: 0,
+  modality: RetirementModality.ORDINARY
 });

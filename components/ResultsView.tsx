@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CalculationResult } from '../types.ts';
+import { CalculationResult, RetirementModality } from '../types.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { jsPDF } from 'jspdf';
 
@@ -9,84 +9,145 @@ interface Props {
 }
 
 const ResultsView: React.FC<Props> = ({ result }) => {
-  const [simulatedMonths, setSimulatedMonths] = React.useState<number>(12);
+  const [simulatedMonths, setSimulatedMonths] = React.useState<number>(0);
+
+  // Sincronizar el simulador con el resultado inicial si es anticipada
+  React.useEffect(() => {
+    if (result && result.anticipationMonths) {
+      setSimulatedMonths(result.anticipationMonths);
+    } else {
+      setSimulatedMonths(0);
+    }
+  }, [result]);
+
+  const getSimulatedPension = (months: number) => {
+    if (!result) return 0;
+    const baseReg = result.bestOption === 'A' ? result.baseReguladoraA : result.baseReguladoraB;
+    const percScale = result.contributionPercentage / 100;
+    // Coeficiente reductor: 0.875% por mes aproximadamente (21% / 24 meses)
+    const reduction = (months / 24) * 0.21; 
+    return (baseReg * percScale * (1 - reduction)) + result.genderGapSupplement;
+  };
+
+  const simulatedPension = getSimulatedPension(simulatedMonths);
+  const ordinaryPension = getSimulatedPension(0);
+  const costOfDecision = ordinaryPension - simulatedPension;
+  const currentSimulatedReductionPerc = (simulatedMonths / 24) * 21;
 
   const downloadPDF = () => {
     if (!result) return;
     
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    let yPos = 25;
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      let yPos = 25;
 
-    // Header Background
-    doc.setFillColor(30, 41, 59);
-    doc.rect(0, 0, pageWidth, 40, 'F');
-    
-    // Header Text
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Informe de Simulación JubilaTech 2026', margin, yPos);
-    
-    yPos = 55;
-    doc.setTextColor(30, 41, 59);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DATOS DEL BENEFICIARIO', margin, yPos);
-    
-    yPos += 10;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Nombre: ${result.userName}`, margin, yPos);
-    yPos += 7;
-    doc.text(`Fecha estimada de jubilación: ${result.retirementDate}`, margin, yPos);
-    yPos += 7;
-    doc.text(`Edad al jubilarse: ${result.targetAge.years} años y ${result.targetAge.months} meses`, margin, yPos);
+      // --- ENCABEZADO ---
+      doc.setFillColor(30, 41, 59); // Slate 800
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Informe de Simulación JubilaTech 2026', margin, yPos);
+      
+      // --- DATOS PERSONALES ---
+      yPos = 55;
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('1. DATOS DEL BENEFICIARIO', margin, yPos);
+      
+      yPos += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Nombre: ${result.userName}`, margin, yPos);
+      yPos += 6;
+      doc.text(`Fecha estimada de jubilación: ${result.retirementDate}`, margin, yPos);
+      yPos += 6;
+      doc.text(`Edad al jubilarse: ${result.targetAge.years} años y ${result.targetAge.months} meses`, margin, yPos);
 
-    yPos += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('DETALLE DE LA PENSIÓN PROYECTADA', margin, yPos);
-    
-    yPos += 10;
-    const finalPension = result.bestOption === 'A' ? result.finalPensionA : result.finalPensionB;
-    doc.setFontSize(16);
-    doc.setTextColor(5, 150, 105); // Emerald color
-    doc.text(`${finalPension.toFixed(2)} EUR / mes (Brutos)`, margin, yPos);
-    
-    yPos += 10;
-    doc.setTextColor(30, 41, 59);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Sistema aplicado: Cálculo ${result.bestOption} (Más beneficioso)`, margin, yPos);
-    yPos += 7;
-    doc.text(`Porcentaje de Base Reguladora: ${result.contributionPercentage.toFixed(1)}%`, margin, yPos);
-    yPos += 7;
-    doc.text(`Complemento Brecha de Género: ${result.genderGapSupplement.toFixed(2)} EUR`, margin, yPos);
+      // --- ESCENARIO DE JUBILACIÓN ---
+      yPos += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('2. ESCENARIO Y AJUSTES DE ANTICIPACIÓN', margin, yPos);
+      
+      yPos += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      const modalityNames = {
+        [RetirementModality.ORDINARY]: 'Ordinaria',
+        [RetirementModality.ANTICIPATED_VOLUNTARY]: 'Anticipada Voluntaria',
+        [RetirementModality.ANTICIPATED_INVOLUNTARY]: 'Anticipada Involuntaria',
+        [RetirementModality.DELAYED]: 'Demorada',
+        [RetirementModality.PARTIAL]: 'Parcial'
+      };
+      doc.text(`Modalidad base: ${modalityNames[result.modality] || 'No especificada'}`, margin, yPos);
+      
+      // Detalle de la anticipación (siempre visible si hay meses en el simulador)
+      yPos += 6;
+      if (simulatedMonths > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Adelanto aplicado: ${simulatedMonths} meses antes de la edad ordinaria`, margin, yPos);
+        yPos += 6;
+        doc.setTextColor(220, 38, 38); // Rojo
+        doc.text(`Penalización por anticipación: -${currentSimulatedReductionPerc.toFixed(2)}%`, margin, yPos);
+        doc.setTextColor(30, 41, 59); // Volver al slate
+      } else {
+        doc.text(`Sin adelanto (Jubilación en fecha ordinaria)`, margin, yPos);
+      }
 
-    yPos += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('PROYECCIÓN DE CARRERA LABORAL', margin, yPos);
-    
-    yPos += 10;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Cotización acumulada hoy: ${result.currentContribution.years} años y ${result.currentContribution.months} meses`, margin, yPos);
-    yPos += 7;
-    doc.text(`Tiempo proyectado restante: ${result.timeRemaining.years} años y ${result.timeRemaining.months} meses`, margin, yPos);
-    yPos += 7;
-    doc.setFont('helvetica', 'bold');
-    doc.text(`TOTAL COTIZADO AL JUBILARSE: ${result.finalContribution.years} años y ${result.finalContribution.months} meses`, margin, yPos);
+      // --- DETALLE ECONÓMICO ---
+      yPos += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('3. CUANTÍA DE LA PENSIÓN ESTIMADA', margin, yPos);
+      
+      yPos += 10;
+      doc.setFontSize(18);
+      doc.setTextColor(5, 150, 105); // Emerald 600
+      doc.text(`${simulatedPension.toFixed(2)} EUR / mes`, margin, yPos);
+      
+      yPos += 8;
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`* Cálculo basado en la mejor opción del Sistema Dual (Modelo ${result.bestOption})`, margin, yPos);
+      yPos += 5;
+      doc.text(`* Incluye Complemento de Brecha de Género: ${result.genderGapSupplement.toFixed(2)}€`, margin, yPos);
+      yPos += 5;
+      doc.text(`* Porcentaje aplicado por años cotizados: ${result.contributionPercentage.toFixed(1)}% de la Base Reguladora`, margin, yPos);
 
-    // Footer
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(150, 150, 150);
-    doc.text('Este informe es una simulación basada en la normativa de 2026 y no tiene validez legal vinculante.', margin, 285);
+      // --- CARRERA LABORAL ---
+      yPos += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('4. PROYECCIÓN DE CARRERA LABORAL', margin, yPos);
+      
+      yPos += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Cotización hoy: ${result.currentContribution.years} años y ${result.currentContribution.months} meses`, margin, yPos);
+      yPos += 6;
+      doc.text(`Tiempo a sumar hasta jubilación: ${result.timeRemaining.years} años y ${result.timeRemaining.months} meses`, margin, yPos);
+      yPos += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`TOTAL PROYECTADO AL JUBILARSE: ${result.finalContribution.years} años y ${result.finalContribution.months} meses`, margin, yPos);
 
-    doc.save(`Informe_Jubilacion_${result.userName.replace(/\s+/g, '_')}.pdf`);
+      // --- PIE DE PÁGINA ---
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(150, 150, 150);
+      const footerText = 'Este documento es una simulación informativa basada en la normativa prevista para 2026. No tiene validez legal.';
+      doc.text(footerText, margin, 285);
+
+      doc.save(`Simulacion_Jubilacion_${result.userName.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error("Error generando el PDF:", error);
+      alert("Hubo un error al generar el PDF. Por favor, inténtalo de nuevo.");
+    }
   };
 
   if (!result) {
@@ -112,23 +173,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
     );
   }
 
-  const chartData = [
-    { name: 'Cálculo A (25a)', valor: Math.round(result.finalPensionA) },
-    { name: 'Cálculo B (29a)', valor: Math.round(result.finalPensionB) },
-  ];
-
-  const getSimulatedPension = (months: number) => {
-    const baseReg = result.bestOption === 'A' ? result.baseReguladoraA : result.baseReguladoraB;
-    const percScale = result.contributionPercentage / 100;
-    const reduction = (months / 24) * 0.21; 
-    return (baseReg * percScale * (1 - reduction)) + result.genderGapSupplement;
-  };
-
-  const simulatedPension = getSimulatedPension(simulatedMonths);
-  const ordinaryPension = getSimulatedPension(0);
-  const costOfDecision = ordinaryPension - simulatedPension;
-  const currentSimulatedReductionPerc = (simulatedMonths / 24) * 21;
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
@@ -150,7 +194,7 @@ const ResultsView: React.FC<Props> = ({ result }) => {
         </div>
 
         <div className="p-8 space-y-8">
-          {/* Hero Stats */}
+          {/* Hero Stats (Dinámico según simulador) */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
               <div>
@@ -159,9 +203,9 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                 <p className="text-slate-400 text-sm">A los {result.targetAge.years} años y {result.targetAge.months} meses</p>
               </div>
               <div className="border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-8 text-right">
-                <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-3">Pensión Proyectada</p>
+                <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-3">Pensión Estimada</p>
                 <div className="flex items-baseline justify-end gap-2">
-                  <span className="text-5xl font-black">{result.bestOption === 'A' ? result.finalPensionA.toFixed(2) : result.finalPensionB.toFixed(2)}</span>
+                  <span className="text-5xl font-black">{simulatedPension.toFixed(2)}</span>
                   <span className="text-xl font-bold">€</span>
                 </div>
                 <div className="mt-2 flex items-center justify-end gap-2">
@@ -198,7 +242,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                 <div className="flex-1">
                   <p className="text-[10px] font-bold text-blue-500 uppercase">Tiempo restante proyectado</p>
                   <p className="text-lg font-bold text-blue-700">+{result.timeRemaining.years} años y {result.timeRemaining.months} meses</p>
-                  <p className="text-[9px] text-blue-400 italic">Estimado hasta el {result.retirementDate}</p>
                 </div>
               </div>
 
@@ -248,11 +291,11 @@ const ResultsView: React.FC<Props> = ({ result }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-900 text-white p-5 rounded-2xl text-center shadow-xl">
-                  <p className="text-[9px] font-bold text-blue-400 uppercase mb-1 tracking-widest">Pensión Estimada</p>
+                  <p className="text-[9px] font-bold text-blue-400 uppercase mb-1 tracking-widest">Pensión Simulada</p>
                   <p className="text-3xl font-black">{simulatedPension.toFixed(2)}€</p>
                 </div>
                 <div className="bg-white border-2 border-red-100 p-5 rounded-2xl text-center shadow-sm">
-                  <p className="text-[9px] font-bold text-red-500 uppercase mb-1 tracking-widest">Pérdida de Poder</p>
+                  <p className="text-[9px] font-bold text-red-500 uppercase mb-1 tracking-widest">Diferencia Mensual</p>
                   <p className="text-3xl font-black text-red-600">-{costOfDecision.toFixed(2)}€</p>
                 </div>
               </div>
