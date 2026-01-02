@@ -1,125 +1,122 @@
 
-import { UserData, CalculationResult, RetirementModality, ContributionBase } from '../types.ts';
+import { UserData, CalculationResult, RetirementModality } from '../types.ts';
+
+const getIPCIndex = (monthsAgo: number): number => {
+  if (monthsAgo <= 24) return 1.0;
+  const yearsAgo = monthsAgo / 12;
+  return 1 + ((yearsAgo - 2) * 0.021); // 2.1% IPC estimado anual
+};
 
 export const calculateRetirement = (data: UserData): CalculationResult => {
-  const { userName, birthDate, totalYears, totalMonths, bases, children, modality, delayedYears, anticipationMonths = 0 } = data;
-  const bDate = new Date(birthDate);
+  const { birthDate, totalYears, totalMonths, children, modality, delayedYears = 0, anticipationMonths = 0, bases } = data;
+  
+  const currentBase = bases[0]?.base || 2400;
   const now = new Date();
-  
-  // 1. Situación Actual (Foto fija hoy)
-  const totalWorkedMonthsAtStart = totalYears * 12 + totalMonths;
-  
-  if (totalWorkedMonthsAtStart < 15 * 12) {
-    return createBlockedResult(userName, "No se cumplen los 15 años mínimos de cotización requeridos por ley.");
-  }
+  const bDate = new Date(birthDate);
 
-  // 2. Proyección de Edad Ordinaria
-  // Estimamos si el usuario llegará a los 38a 3m de cotización al cumplir los 65
+  // 1. DETERMINAR EDAD ORDINARIA PROYECTADA
+  // Calculamos cuántos meses faltan para que el usuario cumpla 65 años
   const dateAt65 = new Date(bDate);
   dateAt65.setFullYear(bDate.getFullYear() + 65);
+  
   const monthsUntil65 = Math.max(0, (dateAt65.getFullYear() - now.getFullYear()) * 12 + (dateAt65.getMonth() - now.getMonth()));
-  const projectedMonthsAt65 = totalWorkedMonthsAtStart + monthsUntil65;
+  const totalWorkedMonthsNow = totalYears * 12 + totalMonths;
+  
+  // Cotización que tendrá el usuario cuando cumpla 65 años si sigue trabajando
+  const projectedMonthsAt65 = totalWorkedMonthsNow + monthsUntil65;
 
-  let ordYears = 66;
-  let ordMonths = 10;
-  if (projectedMonthsAt65 >= (38 * 12 + 3)) {
+  // Normativa: En 2027+ (que aplica a nacimientos en 1967), se piden 38a 6m para los 65.
+  // Si no, la edad es 67 años.
+  const thresholdMonths = (38 * 12) + 6; 
+  
+  let ordYears = 67;
+  let ordMonths = 0;
+
+  if (projectedMonthsAt65 >= thresholdMonths) {
     ordYears = 65;
+    ordMonths = 0;
+  } else {
+    // Escala transitoria si es antes de 2027 (pero para 1967 ya es 2032/2034)
+    ordYears = 67;
     ordMonths = 0;
   }
 
   const ordinaryAge = { years: ordYears, months: ordMonths };
   let targetAge = { ...ordinaryAge };
 
-  // 3. Aplicación de Modalidad y Adelantos/Retrasos
+  // 2. APLICAR MODALIDAD (Sobre la edad ordinaria recalculada)
   let reductionPercentage = 0;
   let delayBonus = 0;
-  let actualAnticipation = 0;
-
+  
   if (modality === RetirementModality.ANTICIPATED_VOLUNTARY) {
-    actualAnticipation = Math.min(anticipationMonths, 24);
-    targetAge = subtractMonths(ordinaryAge, actualAnticipation);
-    reductionPercentage = (actualAnticipation / 24) * 0.21; 
+    targetAge = subtractMonths(ordinaryAge, anticipationMonths);
+    reductionPercentage = (anticipationMonths / 24) * 0.21;
   } else if (modality === RetirementModality.ANTICIPATED_INVOLUNTARY) {
-    actualAnticipation = Math.min(anticipationMonths, 48);
-    targetAge = subtractMonths(ordinaryAge, actualAnticipation);
-    reductionPercentage = (actualAnticipation / 48) * 0.30;
+    targetAge = subtractMonths(ordinaryAge, anticipationMonths);
+    reductionPercentage = (anticipationMonths / 48) * 0.30;
   } else if (modality === RetirementModality.DELAYED) {
-    if (delayedYears && delayedYears > 0) {
-      targetAge.years += delayedYears;
-      delayBonus = delayedYears * 0.04;
-    }
+    targetAge.years += delayedYears;
+    delayBonus = delayedYears * 0.04;
   }
 
-  // 4. Determinación de Fecha Final y Tiempo Restante
+  // 3. FECHA DE JUBILACIÓN REAL
   const rDate = new Date(bDate);
   rDate.setFullYear(bDate.getFullYear() + targetAge.years);
   rDate.setMonth(bDate.getMonth() + targetAge.months);
-  const retirementDate = rDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  let remYears = rDate.getFullYear() - now.getFullYear();
-  let remMonths = rDate.getMonth() - now.getMonth();
-  let remDays = rDate.getDate() - now.getDate();
+  // 4. TIEMPO RESTANTE Y COTIZACIÓN FINAL
+  const monthsUntilRetirement = Math.max(0, (rDate.getFullYear() - now.getFullYear()) * 12 + (rDate.getMonth() - now.getMonth()));
+  const totalFinalMonths = totalWorkedMonthsNow + monthsUntilRetirement;
 
-  if (remDays < 0) {
-    remMonths -= 1;
-    const lastDayOfMonth = new Date(rDate.getFullYear(), rDate.getMonth(), 0).getDate();
-    remDays += lastDayOfMonth;
-  }
-  if (remMonths < 0) {
-    remYears -= 1;
-    remMonths += 12;
-  }
-
-  const timeRemaining = {
-    years: Math.max(0, remYears),
-    months: Math.max(0, remMonths),
-    days: Math.max(0, remDays)
+  // 5. PROYECCIÓN DE BASES (29 AÑOS HACIA ATRÁS DESDE LA JUBILACIÓN)
+  const generateProjectedBases = (totalMonthsNeeded: number): number[] => {
+    return Array.from({ length: totalMonthsNeeded }, (_, i) => {
+      if (i < monthsUntilRetirement) {
+        return currentBase;
+      } else {
+        const monthsInPast = i - monthsUntilRetirement;
+        const nominalPastBase = currentBase / Math.pow(1.02, monthsInPast / 12);
+        return nominalPastBase * getIPCIndex(monthsInPast);
+      }
+    });
   };
 
-  // 5. CÁLCULO DE COTIZACIÓN FINAL PROYECTADA
-  const monthsToAdd = (rDate.getFullYear() - now.getFullYear()) * 12 + (rDate.getMonth() - now.getMonth());
-  const totalFinalMonths = totalWorkedMonthsAtStart + Math.max(0, monthsToAdd);
-  
-  const finalContribution = {
-    years: Math.floor(totalFinalMonths / 12),
-    months: totalFinalMonths % 12
-  };
+  const basesA = generateProjectedBases(300);
+  const baseReguladoraA = basesA.reduce((a, b) => a + b, 0) / 350;
 
-  // 6. ESCALA DE PORCENTAJE SOBRE BASE REGULADORA
+  const basesB = generateProjectedBases(348);
+  const sortedB = [...basesB].sort((a, b) => a - b);
+  const sumBest324 = basesB.reduce((a, b) => a + b, 0) - sortedB.slice(0, 24).reduce((a, b) => a + b, 0);
+  const baseReguladoraB = sumBest324 / 378;
+
+  // 6. PORCENTAJE POR AÑOS (36.5 años = 100%)
   let contributionPercentage = 0;
   if (totalFinalMonths >= 180) {
-    contributionPercentage = 50;
-    const additionalMonths = totalFinalMonths - 180;
-    const monthsNeededForFull = 438 - 180; 
-    const percentageIncrement = (additionalMonths / monthsNeededForFull) * 50;
-    contributionPercentage = Math.min(100, 50 + percentageIncrement);
+    const monthsForFull = (36.5 * 12) - 180;
+    const extraMonths = totalFinalMonths - 180;
+    contributionPercentage = Math.min(100, 50 + (extraMonths / monthsForFull) * 50);
   }
 
-  // 7. Base Reguladora (Sistema Dual A vs B)
-  const calcA_Bases = bases.slice(0, 25).reduce((acc, b) => acc + (b.base * 12), 0);
-  const baseReguladoraA = calcA_Bases / 350;
-
-  const last29Years = [...bases].slice(0, 29);
-  const sortedByAmount = [...last29Years].sort((a, b) => a.base - b.base);
-  const filteredBasesB = last29Years.filter(b => b.year !== sortedByAmount[0]?.year && b.year !== sortedByAmount[1]?.year);
-  const calcB_Sum = filteredBasesB.reduce((acc, b) => acc + (b.base * 12), 0);
-  const baseReguladoraB = calcB_Sum / 352.33;
-
-  const genderGapSupplement = children > 0 ? children * 38 : 0;
   const scaleMultiplier = contributionPercentage / 100;
+  const genderGapSupplement = children > 0 ? children * 33.20 : 0;
 
   let finalPensionA = (baseReguladoraA * scaleMultiplier) * (1 - reductionPercentage) + (delayBonus * baseReguladoraA) + genderGapSupplement;
   let finalPensionB = (baseReguladoraB * scaleMultiplier) * (1 - reductionPercentage) + (delayBonus * baseReguladoraB) + genderGapSupplement;
 
+  const MAX_PENSION = 3175;
+  const MIN_PENSION = 1050;
+  finalPensionA = Math.min(MAX_PENSION, Math.max(MIN_PENSION, finalPensionA));
+  finalPensionB = Math.min(MAX_PENSION, Math.max(MIN_PENSION, finalPensionB));
+
   return {
-    userName,
-    eligible: true,
+    userName: data.userName,
+    eligible: totalWorkedMonthsNow >= 180,
     ordinaryAge,
     targetAge,
-    retirementDate,
-    timeRemaining,
+    retirementDate: rDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    timeRemaining: calculateTimeRemaining(rDate),
     currentContribution: { years: totalYears, months: totalMonths },
-    finalContribution,
+    finalContribution: { years: Math.floor(totalFinalMonths / 12), months: totalFinalMonths % 12 },
     contributionPercentage,
     baseReguladoraA,
     baseReguladoraB,
@@ -130,34 +127,19 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
     reductionPercentage,
     delayBonus,
     modality,
-    anticipationMonths: actualAnticipation
+    anticipationMonths
   };
 };
 
-const subtractMonths = (age: { years: number; months: number }, monthsToSubtract: number) => {
-  let totalMonths = age.years * 12 + age.months - monthsToSubtract;
-  return {
-    years: Math.floor(totalMonths / 12),
-    months: totalMonths % 12
-  };
+const calculateTimeRemaining = (targetDate: Date) => {
+  const now = new Date();
+  let years = targetDate.getFullYear() - now.getFullYear();
+  let months = targetDate.getMonth() - now.getMonth();
+  if (months < 0) { years--; months += 12; }
+  return { years: Math.max(0, years), months: Math.max(0, months), days: 0 };
 };
 
-const createBlockedResult = (userName: string, reason: string): CalculationResult => ({
-  userName,
-  eligible: false,
-  blockReason: reason,
-  ordinaryAge: { years: 0, months: 0 },
-  targetAge: { years: 0, months: 0 },
-  retirementDate: '',
-  timeRemaining: { years: 0, months: 0, days: 0 },
-  currentContribution: { years: 0, months: 0 },
-  finalContribution: { years: 0, months: 0 },
-  contributionPercentage: 0,
-  baseReguladoraA: 0,
-  baseReguladoraB: 0,
-  finalPensionA: 0,
-  finalPensionB: 0,
-  bestOption: 'A',
-  genderGapSupplement: 0,
-  modality: RetirementModality.ORDINARY
-});
+const subtractMonths = (age: { years: number; months: number }, m: number) => {
+  let total = age.years * 12 + age.months - m;
+  return { years: Math.floor(total / 12), months: total % 12 };
+};
