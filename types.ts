@@ -13,6 +13,7 @@ export interface ContributionBase {
 }
 
 export interface UserData {
+  userName: string;
   birthDate: string;
   totalYears: number;
   totalMonths: number;
@@ -26,11 +27,13 @@ export interface UserData {
 }
 
 export interface CalculationResult {
+  userName: string;
   eligible: boolean;
   blockReason?: string;
   ordinaryAge: { years: number; months: number };
   targetAge: { years: number; months: number };
   retirementDate: string;
+  timeRemaining: { years: number; months: number; days: number };
   baseReguladoraA: number; // 25 years
   baseReguladoraB: number; // 29 years - 2 worst
   finalPensionA: number;

@@ -7,23 +7,54 @@ interface Props {
 }
 
 const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
+  const initialBases: ContributionBase[] = [
+    { year: 2026, base: 2311.36 },
+    { year: 2025, base: 1988.98 },
+    { year: 2024, base: 2132.47 },
+    { year: 2023, base: 1700.00 },
+    { year: 2022, base: 1662.96 },
+    { year: 2021, base: 1574.43 },
+    { year: 2020, base: 1560.36 },
+    { year: 2019, base: 1510.41 },
+    { year: 2018, base: 1473.34 },
+    { year: 2017, base: 1542.46 },
+    { year: 2016, base: 1830.50 },
+    { year: 2015, base: 1940.00 },
+    { year: 2014, base: 1899.97 },
+    { year: 2013, base: 1813.20 },
+    { year: 2012, base: 1687.09 },
+    { year: 2011, base: 1854.93 },
+    { year: 2010, base: 1810.34 },
+    { year: 2009, base: 1752.31 },
+    { year: 2008, base: 1851.87 },
+    { year: 2007, base: 1677.11 },
+    { year: 2006, base: 1778.75 },
+    { year: 2005, base: 1454.50 },
+    ...Array.from({ length: 7 }, (_, i) => ({ year: 2004 - i, base: 1300 - (i * 20) }))
+  ];
+
   const [formData, setFormData] = React.useState<UserData>({
-    birthDate: '1961-05-15',
-    totalYears: 38,
+    userName: 'Enrique Sánchez Hernández',
+    birthDate: '1967-09-10',
+    totalYears: 41,
     totalMonths: 5,
-    bases: Array.from({ length: 29 }, (_, i) => ({ year: 2025 - i, base: 2200 - (i * 20) })),
-    children: 2,
+    bases: initialBases,
+    children: 0,
     modality: RetirementModality.ORDINARY,
     unemploymentDuration: 0,
     delayedYears: 0,
     anticipationMonths: 12
   });
 
+  React.useEffect(() => {
+    onCalculate(formData);
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'modality' || name === 'birthDate' ? value : Number(value)
+      [name]: name === 'modality' || name === 'birthDate' || name === 'userName' ? value : Number(value)
     }));
   };
 
@@ -43,6 +74,20 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+        <div className="relative">
+          <span className="absolute left-3 top-2.5 text-slate-400">
+            <i className="fa-solid fa-user"></i>
+          </span>
+          <input 
+            type="text" name="userName" value={formData.userName} onChange={handleChange}
+            placeholder="Introduce tu nombre"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Nacimiento</label>
@@ -101,38 +146,17 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
             onChange={handleChange} min="1" max={maxAnticipation} step="1"
             className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
-          <p className="text-[10px] text-blue-400 mt-2 italic">* El adelanto conlleva coeficientes reductores en la cuantía final.</p>
-        </div>
-      )}
-
-      {formData.modality === RetirementModality.ANTICIPATED_INVOLUNTARY && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Meses como demandante de empleo</label>
-          <input 
-            type="number" name="unemploymentDuration" value={formData.unemploymentDuration} onChange={handleChange} min="0"
-            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-          />
-        </div>
-      )}
-
-      {formData.modality === RetirementModality.DELAYED && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Años de Demora</label>
-          <input 
-            type="number" name="delayedYears" value={formData.delayedYears} onChange={handleChange} min="1" max="10"
-            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-          />
         </div>
       )}
 
       <div className="pt-4">
         <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <i className="fa-solid fa-chart-line text-blue-600"></i>
-          Historial de Bases (Últimos 29 años)
+          Bases de Cotización (Últimos 29 años)
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-48 overflow-y-auto p-2 border border-slate-100 rounded-lg">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-2 border border-slate-100 rounded-lg">
           {formData.bases.map((b, idx) => (
-            <div key={b.year} className="bg-slate-50 p-2 rounded-md">
+            <div key={b.year} className="bg-slate-50 p-2 rounded-md border border-transparent hover:border-blue-200 transition-colors">
               <span className="text-[10px] uppercase font-bold text-slate-400">{b.year}</span>
               <input 
                 type="number" 
@@ -150,7 +174,7 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
       >
         <i className="fa-solid fa-calculator"></i>
-        Calcular Jubilación 2026
+        Actualizar Cálculo
       </button>
     </form>
   );
