@@ -99,12 +99,14 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
             </div>
           </div>
           <div className="relative pt-4 border-t border-slate-800">
-             <label className="text-[10px] font-black text-slate-500 uppercase mb-2 block text-center">Base de Cotización Estimada (€/mes)</label>
+             <label className="text-[10px] font-black text-slate-500 uppercase mb-2 block text-center">Base de Cotización Mensual Actual (€)</label>
              <input 
               type="number" value={currentBase} onChange={(e) => setCurrentBase(Number(e.target.value))}
               className="w-full bg-transparent text-3xl font-black text-center outline-none focus:text-indigo-400 transition-colors"
              />
-             <p className="text-[9px] text-slate-600 mt-2 text-center italic font-medium">Esta cifra se proyectará hasta el día de tu jubilación</p>
+             <p className="text-[9px] text-slate-400 mt-2 text-center italic font-medium px-4">
+                Introduce tu base actual de tu nómina. La app la proyectará automáticamente para el cálculo de la pensión.
+             </p>
           </div>
         </div>
 
