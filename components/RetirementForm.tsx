@@ -58,14 +58,17 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
 
   return (
     <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-slate-100 space-y-8">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-100">
-          <i className="fa-solid fa-fingerprint"></i>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-100">
+            <i className="fa-solid fa-fingerprint"></i>
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-slate-800 tracking-tight">Configurador Personal</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Desarrollado por UGT Sanidad Salamanca</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-xl font-black text-slate-800 tracking-tight">Configurador Personal</h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Ajuste de Parámetros Reales</p>
-        </div>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Logo_UGT.svg/1200px-Logo_UGT.svg.png" alt="UGT" className="h-6 grayscale opacity-30" />
       </div>
 
       <div className="space-y-6">
