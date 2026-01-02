@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { UserData, CalculationResult } from './types';
-import { calculateRetirement } from './services/retirementLogic';
-import RetirementForm from './components/RetirementForm';
-import ResultsView from './components/ResultsView';
+import { UserData, CalculationResult } from './types.ts';
+import { calculateRetirement } from './services/retirementLogic.ts';
+import RetirementForm from './components/RetirementForm.tsx';
+import ResultsView from './components/ResultsView.tsx';
 
 const App: React.FC = () => {
   const [result, setResult] = React.useState<CalculationResult | null>(null);

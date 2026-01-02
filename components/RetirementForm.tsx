@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserData, RetirementModality, ContributionBase } from '../types';
+import { UserData, RetirementModality, ContributionBase } from '../types.ts';
 
 interface Props {
   onCalculate: (data: UserData) => void;
@@ -34,7 +34,7 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
   ];
 
   const [formData, setFormData] = React.useState<UserData>({
-    userName: 'Enrique Sánchez Hernández',
+    userName: 'José Rodríguez Gómez',
     birthDate: '1967-09-10',
     totalYears: 41,
     totalMonths: 5,

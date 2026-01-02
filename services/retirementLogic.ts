@@ -1,5 +1,5 @@
 
-import { UserData, CalculationResult, RetirementModality, ContributionBase } from '../types';
+import { UserData, CalculationResult, RetirementModality, ContributionBase } from '../types.ts';
 
 export const calculateRetirement = (data: UserData): CalculationResult => {
   const { userName, birthDate, totalYears, totalMonths, bases, children, modality, delayedYears, anticipationMonths = 0 } = data;

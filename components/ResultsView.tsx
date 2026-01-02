@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CalculationResult } from '../types';
+import { CalculationResult } from '../types.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { jsPDF } from 'jspdf';
 
@@ -122,30 +122,30 @@ const ResultsView: React.FC<Props> = ({ result }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-        {/* Nueva Cabecera sin solapamientos */}
+        {/* Cabecera optimizada: Evita solapamientos con flexbox y padding adecuado */}
         <div className="bg-slate-50 border-b border-slate-100 p-6">
-           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                 <i className="fa-solid fa-calculator text-blue-600"></i>
                 Resultado del Análisis
               </h2>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className={`px-4 py-2 font-bold text-[10px] uppercase tracking-tighter sm:tracking-widest ${result.bestOption === 'A' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'} rounded-full border ${result.bestOption === 'A' ? 'border-blue-200' : 'border-emerald-200'} shadow-sm flex-1 sm:flex-none text-center`}>
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <div className={`px-4 py-2 font-bold text-[10px] uppercase tracking-tighter sm:tracking-widest ${result.bestOption === 'A' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'} rounded-full border ${result.bestOption === 'A' ? 'border-blue-200' : 'border-emerald-200'} shadow-sm flex-grow sm:flex-none text-center whitespace-nowrap`}>
                   Mejor Opción: Sistema {result.bestOption === 'A' ? 'A (Tradicional)' : 'B (Dual)'}
                 </div>
                 <button 
                   onClick={downloadPDF}
-                  className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white text-[11px] font-bold py-2 px-5 rounded-full transition-all shadow-lg active:scale-95"
+                  className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white text-[11px] font-bold py-2 px-5 rounded-full transition-all shadow-lg active:scale-95 flex-grow sm:flex-none"
                 >
                   <i className="fa-solid fa-download"></i>
-                  PDF
+                  Descargar PDF
                 </button>
               </div>
            </div>
         </div>
 
         <div className="p-8 space-y-8">
-          {/* Hero Stats con Contador de Tiempo Claro */}
+          {/* Hero Stats */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
@@ -173,10 +173,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                     <span className="text-[9px] text-slate-400 font-bold uppercase">días</span>
                   </div>
                 </div>
-                <p className="text-slate-400 text-[10px] mt-4 flex items-center gap-1">
-                  <i className="fa-solid fa-circle-info text-blue-500"></i>
-                  Cuenta atrás basada en el calendario laboral 2026.
-                </p>
               </div>
             </div>
             <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-slate-400 text-[10px] font-medium">
@@ -184,7 +180,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                 <i className="fa-solid fa-fingerprint"></i>
                 TITULAR: {result.userName.toUpperCase()}
               </span>
-              <span className="hidden sm:inline bg-white/10 px-2 py-0.5 rounded italic">Simulación Oficial JubilaTech</span>
             </div>
           </div>
 
@@ -200,7 +195,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                   <p className="text-2xl font-bold text-slate-800">{result.ordinaryAge.years} años {result.ordinaryAge.months > 0 ? `y ${result.ordinaryAge.months} m` : ''}</p>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400 mt-6 leading-relaxed">Referencia oficial para una carrera de cotización completa según Ley 27/2011.</p>
             </div>
             <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-between hover:border-emerald-200 transition-colors">
               <div>
@@ -214,21 +208,15 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                   </p>
                 </div>
               </div>
-              <p className="text-[10px] text-emerald-600 mt-6 font-bold flex items-center gap-1 uppercase">
-                <i className="fa-solid fa-check-double"></i>
-                Importe optimizado con Sistema {result.bestOption}
-              </p>
             </div>
           </div>
 
           {/* Gráfico Comparativo */}
           <div className="p-6 border border-slate-100 rounded-2xl bg-slate-50/30">
-            <div className="flex items-center justify-between mb-8">
-              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                <i className="fa-solid fa-chart-column text-blue-500"></i>
-                Proyección Comparativa de Cuantías
-              </h4>
-            </div>
+            <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <i className="fa-solid fa-chart-column text-blue-500"></i>
+              Proyección Comparativa
+            </h4>
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical" margin={{ left: -10, right: 20 }}>
@@ -237,8 +225,8 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                   <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px', fontWeight: 'bold' }}
-                    formatter={(value) => [`${value} €`, 'Importe']}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
+                    formatter={(value) => [`${value} €`, 'Pensión']}
                   />
                   <Bar dataKey="valor" barSize={20} radius={[0, 8, 8, 0]}>
                     {chartData.map((entry, index) => (
@@ -252,38 +240,22 @@ const ResultsView: React.FC<Props> = ({ result }) => {
 
           {/* Detalles por Sistema */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className={`p-6 rounded-2xl border transition-all ${result.bestOption === 'A' ? 'border-blue-200 bg-blue-50/50 ring-4 ring-blue-500/5' : 'border-slate-100 bg-white hover:border-slate-200 shadow-sm'}`}>
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider">Cálculo A: Tradicional</h4>
-                {result.bestOption === 'A' && <span className="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-bold">MEJOR</span>}
-              </div>
+            <div className={`p-6 rounded-2xl border transition-all ${result.bestOption === 'A' ? 'border-blue-200 bg-blue-50/50' : 'border-slate-100 bg-white'}`}>
+              <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-4">Sistema A: Tradicional</h4>
               <ul className="space-y-3">
-                <li className="flex justify-between items-center">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Base (25 años)</span>
-                  <span className="text-sm font-black text-slate-700">{result.baseReguladoraA.toFixed(2)}€</span>
-                </li>
-                <li className="flex justify-between items-center">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Ajuste Coeficiente</span>
-                  <span className={`text-sm font-black ${result.reductionPercentage! > 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                    {result.reductionPercentage! > 0 ? `-${(result.reductionPercentage! * 100).toFixed(1)}%` : '0.0%'}
-                  </span>
+                <li className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-bold">Base (25a)</span>
+                  <span className="font-black text-slate-700">{result.baseReguladoraA.toFixed(2)}€</span>
                 </li>
               </ul>
             </div>
             
-            <div className={`p-6 rounded-2xl border transition-all ${result.bestOption === 'B' ? 'border-emerald-200 bg-emerald-50/50 ring-4 ring-emerald-500/5' : 'border-slate-100 bg-white hover:border-slate-200 shadow-sm'}`}>
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider">Cálculo B: Dual 2026</h4>
-                {result.bestOption === 'B' && <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">MEJOR</span>}
-              </div>
+            <div className={`p-6 rounded-2xl border transition-all ${result.bestOption === 'B' ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-100 bg-white'}`}>
+              <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-4">Sistema B: Dual</h4>
               <ul className="space-y-3">
-                <li className="flex justify-between items-center">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Base (29 años)</span>
-                  <span className="text-sm font-black text-slate-700">{result.baseReguladoraB.toFixed(2)}€</span>
-                </li>
-                <li className="flex justify-between items-center">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Mejoras Aplicadas</span>
-                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded uppercase">24 meses excluidos</span>
+                <li className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-bold">Base (29a)</span>
+                  <span className="font-black text-slate-700">{result.baseReguladoraB.toFixed(2)}€</span>
                 </li>
               </ul>
             </div>
