@@ -64,6 +64,10 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
     setFormData(prev => ({ ...prev, bases: newBases }));
   };
 
+  const setAnticipation = (months: number) => {
+    setFormData(prev => ({ ...prev, anticipationMonths: months }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onCalculate(formData);
@@ -137,10 +141,27 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
 
       {isAnticipated && (
         <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-          <label className="block text-sm font-bold text-blue-700 mb-2 flex justify-between">
-            <span>Meses de Anticipación</span>
-            <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">{formData.anticipationMonths} meses</span>
-          </label>
+          <div className="flex justify-between items-center mb-4">
+            <label className="text-sm font-bold text-blue-700">
+              Anticipación: <span className="bg-blue-600 text-white px-2 py-0.5 rounded ml-1">{formData.anticipationMonths} meses</span>
+            </label>
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={() => setAnticipation(12)}
+                className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${formData.anticipationMonths === 12 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+              >
+                12 Meses
+              </button>
+              <button 
+                type="button"
+                onClick={() => setAnticipation(24)}
+                className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${formData.anticipationMonths === 24 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+              >
+                24 Meses
+              </button>
+            </div>
+          </div>
           <input 
             type="range" name="anticipationMonths" value={formData.anticipationMonths} 
             onChange={handleChange} min="1" max={maxAnticipation} step="1"

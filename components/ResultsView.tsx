@@ -119,10 +119,17 @@ const ResultsView: React.FC<Props> = ({ result }) => {
     { name: 'Cálculo B (29a)', valor: Math.round(result.finalPensionB) },
   ];
 
+  // Logic to calculate anticipation scenarios on the fly for UI
+  const getScenarioPension = (months: number) => {
+    const baseReg = result.bestOption === 'A' ? result.baseReguladoraA : result.baseReguladoraB;
+    const reduction = (months / 24) * 0.21; // Estimate for voluntary 
+    return (baseReg * (1 - reduction)) + result.genderGapSupplement;
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-        {/* Cabecera optimizada: Evita solapamientos con flexbox y padding adecuado */}
+        {/* Cabecera optimizada */}
         <div className="bg-slate-50 border-b border-slate-100 p-6">
            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -207,6 +214,31 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                     {result.bestOption === 'A' ? result.finalPensionA.toFixed(2) : result.finalPensionB.toFixed(2)} €
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comparativa de Escenarios de Anticipación (Nuevo) */}
+          <div className="p-6 border border-slate-100 rounded-2xl bg-slate-50/50">
+            <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <i className="fa-solid fa-layer-group text-blue-500"></i>
+              Escenarios de Anticipación Voluntaria (Estimados)
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
+                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">24 Meses (Máx)</p>
+                <p className="text-lg font-black text-red-500">{getScenarioPension(24).toFixed(2)}€</p>
+                <p className="text-[8px] text-slate-400 font-bold uppercase mt-1">-21.00% recorte</p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-blue-200 text-center shadow-sm">
+                <p className="text-[9px] font-bold text-blue-400 uppercase mb-1">12 Meses</p>
+                <p className="text-lg font-black text-blue-600">{getScenarioPension(12).toFixed(2)}€</p>
+                <p className="text-[8px] text-blue-400 font-bold uppercase mt-1">-10.50% recorte</p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
+                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">0 Meses (Ordinaria)</p>
+                <p className="text-lg font-black text-emerald-600">{getScenarioPension(0).toFixed(2)}€</p>
+                <p className="text-[8px] text-emerald-500 font-bold uppercase mt-1">Sin recortes</p>
               </div>
             </div>
           </div>
