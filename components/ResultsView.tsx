@@ -13,14 +13,79 @@ const ResultsView: React.FC<Props> = ({ result }) => {
 
   const downloadPDF = () => {
     if (!result) return;
+    
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    let yPos = 25;
+
+    // Header Background
     doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    // Header Text
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Informe de Simulación de Jubilación', 20, 25);
+    doc.text('Informe de Simulación JubilaTech 2026', margin, yPos);
+    
+    yPos = 55;
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DATOS DEL BENEFICIARIO', margin, yPos);
+    
+    yPos += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Nombre: ${result.userName}`, margin, yPos);
+    yPos += 7;
+    doc.text(`Fecha estimada de jubilación: ${result.retirementDate}`, margin, yPos);
+    yPos += 7;
+    doc.text(`Edad al jubilarse: ${result.targetAge.years} años y ${result.targetAge.months} meses`, margin, yPos);
+
+    yPos += 15;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('DETALLE DE LA PENSIÓN PROYECTADA', margin, yPos);
+    
+    yPos += 10;
+    const finalPension = result.bestOption === 'A' ? result.finalPensionA : result.finalPensionB;
+    doc.setFontSize(16);
+    doc.setTextColor(5, 150, 105); // Emerald color
+    doc.text(`${finalPension.toFixed(2)} EUR / mes (Brutos)`, margin, yPos);
+    
+    yPos += 10;
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Sistema aplicado: Cálculo ${result.bestOption} (Más beneficioso)`, margin, yPos);
+    yPos += 7;
+    doc.text(`Porcentaje de Base Reguladora: ${result.contributionPercentage.toFixed(1)}%`, margin, yPos);
+    yPos += 7;
+    doc.text(`Complemento Brecha de Género: ${result.genderGapSupplement.toFixed(2)} EUR`, margin, yPos);
+
+    yPos += 15;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('PROYECCIÓN DE CARRERA LABORAL', margin, yPos);
+    
+    yPos += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Cotización acumulada hoy: ${result.currentContribution.years} años y ${result.currentContribution.months} meses`, margin, yPos);
+    yPos += 7;
+    doc.text(`Tiempo proyectado restante: ${result.timeRemaining.years} años y ${result.timeRemaining.months} meses`, margin, yPos);
+    yPos += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL COTIZADO AL JUBILARSE: ${result.finalContribution.years} años y ${result.finalContribution.months} meses`, margin, yPos);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(150, 150, 150);
+    doc.text('Este informe es una simulación basada en la normativa de 2026 y no tiene validez legal vinculante.', margin, 285);
+
     doc.save(`Informe_Jubilacion_${result.userName.replace(/\s+/g, '_')}.pdf`);
   };
 
@@ -55,7 +120,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
   const getSimulatedPension = (months: number) => {
     const baseReg = result.bestOption === 'A' ? result.baseReguladoraA : result.baseReguladoraB;
     const percScale = result.contributionPercentage / 100;
-    // Coeficiente reductor aproximado según meses (máx 21% a 24 meses)
     const reduction = (months / 24) * 0.21; 
     return (baseReg * percScale * (1 - reduction)) + result.genderGapSupplement;
   };
@@ -77,8 +141,9 @@ const ResultsView: React.FC<Props> = ({ result }) => {
               </h2>
               <button 
                 onClick={downloadPDF}
-                className="bg-slate-900 hover:bg-black text-white text-[11px] font-bold py-2 px-5 rounded-full transition-all"
+                className="bg-slate-900 hover:bg-black text-white text-[11px] font-bold py-2.5 px-6 rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2"
               >
+                <i className="fa-solid fa-file-pdf"></i>
                 Descargar Informe
               </button>
            </div>
@@ -116,7 +181,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
             </h4>
             
             <div className="space-y-4">
-              {/* Bloque 1: Situación Actual */}
               <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 shrink-0">
                   <i className="fa-solid fa-clock-rotate-left"></i>
@@ -127,35 +191,30 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                 </div>
               </div>
 
-              {/* Bloque 2: Tiempo que resta */}
               <div className="flex items-center gap-4 bg-blue-50 p-4 rounded-2xl border border-blue-100 ml-4">
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-200">
                   <i className="fa-solid fa-plus"></i>
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] font-bold text-blue-500 uppercase">Tiempo restante (Suponiendo trabajo continuo)</p>
+                  <p className="text-[10px] font-bold text-blue-500 uppercase">Tiempo restante proyectado</p>
                   <p className="text-lg font-bold text-blue-700">+{result.timeRemaining.years} años y {result.timeRemaining.months} meses</p>
                   <p className="text-[9px] text-blue-400 italic">Estimado hasta el {result.retirementDate}</p>
                 </div>
               </div>
 
-              {/* Bloque 3: Total Final */}
               <div className="flex items-center gap-4 bg-emerald-50 p-6 rounded-2xl border border-emerald-100 ring-2 ring-emerald-500/10">
                 <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-200">
                   <i className="fa-solid fa-flag-checkered"></i>
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] font-bold text-emerald-600 uppercase mb-1 tracking-wider">Cotización Total Proyectada al Jubilarse</p>
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase mb-1 tracking-wider">Cotización Total al Jubilarse</p>
                   <p className="text-2xl font-black text-emerald-800">{result.finalContribution.years} años y {result.finalContribution.months} meses</p>
-                  <div className="mt-2 inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold uppercase">
-                    Utilizado para el cálculo de cuantía
-                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Simulador Interactivo con Visualización de Rebaja */}
+          {/* Simulador Interactivo */}
           <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -179,8 +238,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                   onChange={(e) => setSimulatedMonths(Number(e.target.value))}
                   className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-4"
                 />
-                
-                {/* Visualizador de Porcentaje de Rebaja */}
                 <div className="h-4 w-full bg-slate-200 rounded-full overflow-hidden flex mb-6">
                    <div 
                     className="h-full bg-red-500 transition-all duration-300 ease-out" 
@@ -193,12 +250,10 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                 <div className="bg-slate-900 text-white p-5 rounded-2xl text-center shadow-xl">
                   <p className="text-[9px] font-bold text-blue-400 uppercase mb-1 tracking-widest">Pensión Estimada</p>
                   <p className="text-3xl font-black">{simulatedPension.toFixed(2)}€</p>
-                  <p className="text-[10px] text-slate-400 mt-1 italic">Con adelanto de {simulatedMonths}m</p>
                 </div>
                 <div className="bg-white border-2 border-red-100 p-5 rounded-2xl text-center shadow-sm">
                   <p className="text-[9px] font-bold text-red-500 uppercase mb-1 tracking-widest">Pérdida de Poder</p>
                   <p className="text-3xl font-black text-red-600">-{costOfDecision.toFixed(2)}€</p>
-                  <p className="text-[10px] text-red-400 mt-1 font-bold">-{currentSimulatedReductionPerc.toFixed(1)}% mensual</p>
                 </div>
               </div>
             </div>
