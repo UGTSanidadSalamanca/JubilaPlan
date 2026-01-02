@@ -20,10 +20,10 @@ export interface UserData {
   bases: ContributionBase[];
   children: number;
   modality: RetirementModality;
-  unemploymentDuration?: number; // Months registered for involuntary
-  partialReduction?: number; // 25 to 75
+  unemploymentDuration?: number;
+  partialReduction?: number;
   delayedYears?: number;
-  anticipationMonths?: number; // Chosen months to advance
+  anticipationMonths?: number;
 }
 
 export interface CalculationResult {
@@ -34,13 +34,15 @@ export interface CalculationResult {
   targetAge: { years: number; months: number };
   retirementDate: string;
   timeRemaining: { years: number; months: number; days: number };
-  baseReguladoraA: number; // 25 years
-  baseReguladoraB: number; // 29 years - 2 worst
+  currentContribution: { years: number; months: number };
+  finalContribution: { years: number; months: number };
+  contributionPercentage: number; // Porcentaje de la base reguladora según años (50%-100%)
+  baseReguladoraA: number;
+  baseReguladoraB: number;
   finalPensionA: number;
   finalPensionB: number;
   bestOption: 'A' | 'B';
   genderGapSupplement: number;
   reductionPercentage?: number;
   delayBonus?: number;
-  isPartialCompatible?: boolean;
 }

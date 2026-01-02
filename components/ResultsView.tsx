@@ -9,94 +9,18 @@ interface Props {
 }
 
 const ResultsView: React.FC<Props> = ({ result }) => {
-  // Local state for the interactive simulator inside results
   const [simulatedMonths, setSimulatedMonths] = React.useState<number>(12);
-
-  React.useEffect(() => {
-    if (result && result.targetAge) {
-      // Initialize with whatever the user put in the form
-      // Note: This is just for the internal simulation card
-    }
-  }, [result]);
 
   const downloadPDF = () => {
     if (!result) return;
-
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-
-    // Header
-    doc.setFillColor(30, 41, 59); // Slate-800
+    doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, pageWidth, 40, 'F');
-    
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('Informe de Simulación de Jubilación', 20, 25);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Generado por JubilaTech 2026', pageWidth - 70, 25);
-
-    // Body
-    doc.setTextColor(30, 41, 59);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Información del Titular', 20, 55);
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Nombre: ${result.userName}`, 20, 65);
-    doc.text(`Cálculo efectuado el: ${new Date().toLocaleDateString('es-ES')}`, 20, 72);
-
-    // Results Box
-    doc.setFillColor(248, 250, 252); // Slate-50
-    doc.rect(20, 80, pageWidth - 40, 65, 'F');
-    doc.setDrawColor(226, 232, 240); // Slate-200
-    doc.rect(20, 80, pageWidth - 40, 65, 'S');
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Resultado Principal', 30, 92);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Fecha Estimada de Jubilación: ${result.retirementDate}`, 30, 102);
-    doc.text(`Edad al Jubilarse: ${result.targetAge.years} años y ${result.targetAge.months} meses`, 30, 109);
-    doc.text(`Tiempo de espera: ${result.timeRemaining.years} años, ${result.timeRemaining.months} meses y ${result.timeRemaining.days} días`, 30, 116);
-    
-    doc.setFontSize(16);
-    doc.setTextColor(16, 185, 129); // Green-600
-    doc.text(`Pensión Mensual: ${result.bestOption === 'A' ? result.finalPensionA.toFixed(2) : result.finalPensionB.toFixed(2)} EUR`, 30, 135);
-
-    // Comparison Table
-    doc.setTextColor(30, 41, 59);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Comparativa de Sistemas', 20, 160);
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    // System A
-    doc.text('Sistema A (Tradicional - 25 años)', 20, 170);
-    doc.text(`Base Reguladora: ${result.baseReguladoraA.toFixed(2)} EUR`, 30, 177);
-    doc.text(`Cuantía Final A: ${result.finalPensionA.toFixed(2)} EUR`, 30, 184);
-
-    // System B
-    doc.text('Sistema B (Extendido - 29 años)', 20, 195);
-    doc.text(`Base Reguladora: ${result.baseReguladoraB.toFixed(2)} EUR`, 30, 202);
-    doc.text(`Cuantía Final B: ${result.finalPensionB.toFixed(2)} EUR`, 30, 209);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Opción más beneficiosa: Sistema ${result.bestOption}`, 20, 220);
-
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    const disclaimer = 'Este documento es una simulación basada en los datos proporcionados por el usuario para el año 2026. No tiene valor legal vinculante ante la Seguridad Social.';
-    const splitDisclaimer = doc.splitTextToSize(disclaimer, pageWidth - 40);
-    doc.text(splitDisclaimer, 20, 275);
-
     doc.save(`Informe_Jubilacion_${result.userName.replace(/\s+/g, '_')}.pdf`);
   };
 
@@ -105,7 +29,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
       <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 border-2 border-dashed border-slate-200 rounded-2xl bg-white/50">
         <i className="fa-solid fa-file-invoice-dollar text-6xl mb-4 text-slate-200"></i>
         <p className="text-xl font-medium">Introduce tus datos para ver el cálculo</p>
-        <p className="text-sm">Obtendrás fecha exacta y comparativa de base reguladora.</p>
       </div>
     );
   }
@@ -129,12 +52,11 @@ const ResultsView: React.FC<Props> = ({ result }) => {
     { name: 'Cálculo B (29a)', valor: Math.round(result.finalPensionB) },
   ];
 
-  // Logic for the interactive simulator
   const getSimulatedPension = (months: number) => {
     const baseReg = result.bestOption === 'A' ? result.baseReguladoraA : result.baseReguladoraB;
-    // Simple linear approximation of reduction for UI feedback: max 21% at 24 months
+    const percScale = result.contributionPercentage / 100;
     const reduction = (months / 24) * 0.21; 
-    return (baseReg * (1 - reduction)) + result.genderGapSupplement;
+    return (baseReg * percScale * (1 - reduction)) + result.genderGapSupplement;
   };
 
   const simulatedPension = getSimulatedPension(simulatedMonths);
@@ -144,203 +66,129 @@ const ResultsView: React.FC<Props> = ({ result }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-        {/* Cabecera optimizada */}
+        {/* Cabecera */}
         <div className="bg-slate-50 border-b border-slate-100 p-6">
            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                 <i className="fa-solid fa-calculator text-blue-600"></i>
-                Resultado del Análisis
+                Análisis Proyectado 2026
               </h2>
-              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                <div className={`px-4 py-2 font-bold text-[10px] uppercase tracking-tighter sm:tracking-widest ${result.bestOption === 'A' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'} rounded-full border ${result.bestOption === 'A' ? 'border-blue-200' : 'border-emerald-200'} shadow-sm flex-grow sm:flex-none text-center whitespace-nowrap`}>
-                  Mejor Opción: Sistema {result.bestOption === 'A' ? 'A (Tradicional)' : 'B (Dual)'}
-                </div>
-                <button 
-                  onClick={downloadPDF}
-                  className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white text-[11px] font-bold py-2 px-5 rounded-full transition-all shadow-lg active:scale-95 flex-grow sm:flex-none"
-                >
-                  <i className="fa-solid fa-download"></i>
-                  Descargar PDF
-                </button>
-              </div>
+              <button 
+                onClick={downloadPDF}
+                className="bg-slate-900 hover:bg-black text-white text-[11px] font-bold py-2 px-5 rounded-full transition-all"
+              >
+                Descargar Informe
+              </button>
            </div>
         </div>
 
         <div className="p-8 space-y-8">
           {/* Hero Stats */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
               <div>
-                <p className="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-3">Fecha Estimada de Jubilación</p>
+                <p className="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-3">Fecha de Jubilación</p>
                 <h3 className="text-3xl lg:text-4xl font-black text-white mb-2 leading-tight">{result.retirementDate}</h3>
-                <div className="flex items-center gap-2 text-slate-400 text-sm">
-                  <i className="fa-solid fa-clock-rotate-left"></i>
-                  <span>A los {result.targetAge.years} años {result.targetAge.months > 0 ? `y ${result.targetAge.months} meses` : ''}</span>
-                </div>
+                <p className="text-slate-400 text-sm">A los {result.targetAge.years} años y {result.targetAge.months} meses</p>
               </div>
-              <div className="border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-8">
-                <p className="text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-3">Tiempo Total Restante</p>
-                <div className="flex flex-wrap items-baseline gap-4">
-                  <div className="text-center">
-                    <span className="text-4xl font-black block">{result.timeRemaining.years}</span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase">años</span>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-4xl font-black block">{result.timeRemaining.months}</span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase">meses</span>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-4xl font-black block">{result.timeRemaining.days}</span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase">días</span>
-                  </div>
+              <div className="border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-8 text-right">
+                <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-3">Pensión Proyectada</p>
+                <div className="flex items-baseline justify-end gap-2">
+                  <span className="text-5xl font-black">{result.bestOption === 'A' ? result.finalPensionA.toFixed(2) : result.finalPensionB.toFixed(2)}</span>
+                  <span className="text-xl font-bold">€</span>
                 </div>
-              </div>
-            </div>
-            <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-slate-400 text-[10px] font-medium">
-              <span className="flex items-center gap-2">
-                <i className="fa-solid fa-fingerprint"></i>
-                TITULAR: {result.userName.toUpperCase()}
-              </span>
-            </div>
-          </div>
-
-          {/* Simulador Interactivo de Adelanto (Nuevo Selector) */}
-          <div className="bg-white p-6 rounded-3xl border-2 border-blue-50 shadow-sm relative">
-            <div className="flex items-center justify-between mb-6">
-              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                <i className="fa-solid fa-sliders text-blue-500"></i>
-                Simulador de Impacto por Adelanto
-              </h4>
-              <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded-lg uppercase">Interactuable</span>
-            </div>
-
-            <div className="space-y-8">
-              {/* Selector de Meses (Botones y Slider) */}
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
-                  <span>Adelanto: {simulatedMonths} meses</span>
-                  <span className="text-red-500">Recorte: -{((simulatedMonths / 24) * 21).toFixed(2)}%</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="24" 
-                  value={simulatedMonths} 
-                  onChange={(e) => setSimulatedMonths(Number(e.target.value))}
-                  className="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-                <div className="flex flex-wrap gap-2">
-                  {[0, 6, 12, 18, 24].map(m => (
-                    <button 
-                      key={m}
-                      onClick={() => setSimulatedMonths(m)}
-                      className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${simulatedMonths === m ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-blue-300'}`}
-                    >
-                      {m === 0 ? 'Ordinaria' : `${m} meses`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Resultado de la simulación */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-900 text-white p-5 rounded-2xl flex flex-col justify-center">
-                  <p className="text-[9px] font-bold text-blue-400 uppercase mb-1">Pensión Estimada</p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-black">{simulatedPension.toFixed(2)}</span>
-                    <span className="text-lg font-bold">€</span>
-                  </div>
-                </div>
-                <div className="bg-red-50 border border-red-100 p-5 rounded-2xl flex flex-col justify-center">
-                  <p className="text-[9px] font-bold text-red-500 uppercase mb-1">Coste Mensual por Adelanto</p>
-                  <div className="flex items-baseline gap-2 text-red-600">
-                    <span className="text-2xl font-black">-{costOfDecision.toFixed(2)}</span>
-                    <span className="text-sm font-bold">€/mes</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-[9px] text-slate-400 text-center italic">
-                * Valores basados en una aproximación lineal del coeficiente reductor voluntario para 2026.
-              </p>
-            </div>
-          </div>
-
-          {/* Tarjetas de Indicadores */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-blue-200 transition-colors">
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Edad Legal Ordinaria</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                    <i className="fa-solid fa-scale-balanced"></i>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-800">{result.ordinaryAge.years} años {result.ordinaryAge.months > 0 ? `y ${result.ordinaryAge.months} m` : ''}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-between hover:border-emerald-200 transition-colors">
-              <div>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">Pensión Bruta Final (Actual)</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
-                    <i className="fa-solid fa-euro-sign"></i>
-                  </div>
-                  <p className="text-4xl font-black text-emerald-700">
-                    {result.bestOption === 'A' ? result.finalPensionA.toFixed(2) : result.finalPensionB.toFixed(2)} €
-                  </p>
+                <div className="mt-2 flex items-center justify-end gap-2">
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md font-bold uppercase">
+                    {result.contributionPercentage.toFixed(1)}% Base Reguladora
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Gráfico Comparativo */}
-          <div className="p-6 border border-slate-100 rounded-2xl bg-slate-50/30">
+          {/* Hoja de Ruta de Cotización Corregida */}
+          <div className="bg-white p-6 rounded-3xl border-2 border-slate-50 shadow-sm">
             <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <i className="fa-solid fa-chart-column text-blue-500"></i>
-              Proyección Comparativa
+              <i className="fa-solid fa-road text-blue-500"></i>
+              Proyección de Vida Laboral (Hoy → Jubilación)
             </h4>
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical" margin={{ left: -10, right: 20 }}>
-                  <CartesianGrid strokeDasharray="4 4" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
-                    formatter={(value) => [`${value} €`, 'Pensión']}
-                  />
-                  <Bar dataKey="valor" barSize={20} radius={[0, 8, 8, 0]}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === (result.bestOption === 'A' ? 0 : 1) ? '#10b981' : '#cbd5e1'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+            
+            <div className="space-y-4">
+              {/* Bloque 1: Situación Actual */}
+              <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 shrink-0">
+                  <i className="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Tiempo Trabajado a día de hoy</p>
+                  <p className="text-lg font-bold text-slate-700">{result.currentContribution.years} años y {result.currentContribution.months} meses</p>
+                </div>
+              </div>
 
-          {/* Detalles por Sistema */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className={`p-6 rounded-2xl border transition-all ${result.bestOption === 'A' ? 'border-blue-200 bg-blue-50/50' : 'border-slate-100 bg-white'}`}>
-              <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-4">Sistema A: Tradicional</h4>
-              <ul className="space-y-3">
-                <li className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-bold">Base (25a)</span>
-                  <span className="font-black text-slate-700">{result.baseReguladoraA.toFixed(2)}€</span>
-                </li>
-              </ul>
+              {/* Bloque 2: Tiempo que resta (Simbolizado como suma) */}
+              <div className="flex items-center gap-4 bg-blue-50 p-4 rounded-2xl border border-blue-100 ml-4">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-200">
+                  <i className="fa-solid fa-plus"></i>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-blue-500 uppercase">Tiempo restante (Suponiendo trabajo continuo)</p>
+                  <p className="text-lg font-bold text-blue-700">+{result.timeRemaining.years} años y {result.timeRemaining.months} meses</p>
+                  <p className="text-[9px] text-blue-400 italic">Estimado hasta el {result.retirementDate}</p>
+                </div>
+              </div>
+
+              {/* Bloque 3: Total Final */}
+              <div className="flex items-center gap-4 bg-emerald-50 p-6 rounded-2xl border border-emerald-100 ring-2 ring-emerald-500/10">
+                <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-200">
+                  <i className="fa-solid fa-flag-checkered"></i>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase mb-1 tracking-wider">Cotización Total Proyectada al Jubilarse</p>
+                  <p className="text-2xl font-black text-emerald-800">{result.finalContribution.years} años y {result.finalContribution.months} meses</p>
+                  <div className="mt-2 inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[9px] font-bold uppercase">
+                    Utilizado para el cálculo de cuantía
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className={`p-6 rounded-2xl border transition-all ${result.bestOption === 'B' ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-100 bg-white'}`}>
-              <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-4">Sistema B: Dual</h4>
-              <ul className="space-y-3">
-                <li className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-bold">Base (29a)</span>
-                  <span className="font-black text-slate-700">{result.baseReguladoraB.toFixed(2)}€</span>
-                </li>
-              </ul>
+            <div className="mt-8">
+               <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase mb-2">
+                 <span>Progreso de carrera</span>
+                 <span>{result.contributionPercentage.toFixed(1)}% de pensión</span>
+               </div>
+               <div className="h-3 bg-slate-100 rounded-full overflow-hidden flex">
+                 <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, (result.currentContribution.years / 36.5) * 100)}%` }}></div>
+                 <div className="h-full bg-blue-300" style={{ width: `${Math.min(100 - (result.currentContribution.years / 36.5) * 100, (result.timeRemaining.years / 36.5) * 100)}%` }}></div>
+               </div>
+               <p className="text-[9px] text-slate-400 mt-2 text-center italic">
+                 Has completado el {((result.currentContribution.years / result.finalContribution.years) * 100).toFixed(0)}% de tu carrera proyectada.
+               </p>
+            </div>
+          </div>
+
+          {/* Simulador Interactivo */}
+          <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+            <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <i className="fa-solid fa-sliders text-blue-500"></i>
+              Impacto de Anticipación Interactivo
+            </h4>
+            <div className="space-y-4">
+              <input 
+                type="range" min="0" max="24" value={simulatedMonths} 
+                onChange={(e) => setSimulatedMonths(Number(e.target.value))}
+                className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-900 text-white p-4 rounded-2xl text-center">
+                  <p className="text-[9px] font-bold text-blue-400 uppercase mb-1">Pensión a {simulatedMonths}m</p>
+                  <p className="text-2xl font-black">{simulatedPension.toFixed(2)}€</p>
+                </div>
+                <div className="bg-white border border-red-100 p-4 rounded-2xl text-center">
+                  <p className="text-[9px] font-bold text-red-500 uppercase mb-1">Diferencia Mensual</p>
+                  <p className="text-2xl font-black text-red-600">-{costOfDecision.toFixed(2)}€</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

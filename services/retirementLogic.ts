@@ -3,19 +3,26 @@ import { UserData, CalculationResult, RetirementModality, ContributionBase } fro
 
 export const calculateRetirement = (data: UserData): CalculationResult => {
   const { userName, birthDate, totalYears, totalMonths, bases, children, modality, delayedYears, anticipationMonths = 0 } = data;
-  const totalWorkedMonths = totalYears * 12 + totalMonths;
+  const bDate = new Date(birthDate);
+  const now = new Date();
   
-  // 1. Minimum Requirements (Carencia)
-  const minRequiredMonths = 15 * 12;
-  if (totalWorkedMonths < minRequiredMonths) {
-    return createBlockedResult(userName, "No se cumplen los 15 años mínimos de cotización.");
+  // 1. Situación Actual (Foto fija hoy)
+  const totalWorkedMonthsAtStart = totalYears * 12 + totalMonths;
+  
+  if (totalWorkedMonthsAtStart < 15 * 12) {
+    return createBlockedResult(userName, "No se cumplen los 15 años mínimos de cotización requeridos por ley.");
   }
 
-  // 2. Ordinary Age Calculation (2026)
+  // 2. Proyección de Edad Ordinaria
+  // Estimamos si el usuario llegará a los 38a 3m de cotización al cumplir los 65
+  const dateAt65 = new Date(bDate);
+  dateAt65.setFullYear(bDate.getFullYear() + 65);
+  const monthsUntil65 = Math.max(0, (dateAt65.getFullYear() - now.getFullYear()) * 12 + (dateAt65.getMonth() - now.getMonth()));
+  const projectedMonthsAt65 = totalWorkedMonthsAtStart + monthsUntil65;
+
   let ordYears = 66;
   let ordMonths = 10;
-  
-  if (totalWorkedMonths >= (38 * 12 + 3)) {
+  if (projectedMonthsAt65 >= (38 * 12 + 3)) {
     ordYears = 65;
     ordMonths = 0;
   }
@@ -23,24 +30,15 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
   const ordinaryAge = { years: ordYears, months: ordMonths };
   let targetAge = { ...ordinaryAge };
 
-  // 3. Modality Checks and Reduction Coefficients
+  // 3. Aplicación de Modalidad y Adelantos/Retrasos
   let reductionPercentage = 0;
   let delayBonus = 0;
 
   if (modality === RetirementModality.ANTICIPATED_VOLUNTARY) {
-    if (totalWorkedMonths < 35 * 12) {
-      return createBlockedResult(userName, "La jubilación anticipada voluntaria requiere 35 años cotizados.");
-    }
     const months = Math.min(anticipationMonths, 24);
     targetAge = subtractMonths(ordinaryAge, months);
-    reductionPercentage = (months / 24) * 0.21;
+    reductionPercentage = (months / 24) * 0.21; 
   } else if (modality === RetirementModality.ANTICIPATED_INVOLUNTARY) {
-    if (totalWorkedMonths < 33 * 12) {
-      return createBlockedResult(userName, "La jubilación anticipada involuntaria requiere 33 años cotizados.");
-    }
-    if ((data.unemploymentDuration || 0) < 6) {
-      return createBlockedResult(userName, "Requiere estar inscrito como demandante de empleo al menos 6 meses.");
-    }
     const months = Math.min(anticipationMonths, 48);
     targetAge = subtractMonths(ordinaryAge, months);
     reductionPercentage = (months / 48) * 0.30;
@@ -51,17 +49,12 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
     }
   }
 
-  // 4. Calculate Retirement Date
-  const bDate = new Date(birthDate);
+  // 4. Determinación de Fecha Final y Tiempo Restante
   const rDate = new Date(bDate);
   rDate.setFullYear(bDate.getFullYear() + targetAge.years);
   rDate.setMonth(bDate.getMonth() + targetAge.months);
   const retirementDate = rDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  // 5. Calculate Time Remaining
-  const now = new Date();
-  const diffTime = rDate.getTime() - now.getTime();
-  
   let remYears = rDate.getFullYear() - now.getFullYear();
   let remMonths = rDate.getMonth() - now.getMonth();
   let remDays = rDate.getDate() - now.getDate();
@@ -82,7 +75,29 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
     days: Math.max(0, remDays)
   };
 
-  // 6. Base Reguladora Calculation (System Dual)
+  // 5. CÁLCULO DE COTIZACIÓN FINAL PROYECTADA
+  // Calculamos los meses de cotización adicionales que sumará hasta el día de su jubilación
+  const monthsToAdd = (rDate.getFullYear() - now.getFullYear()) * 12 + (rDate.getMonth() - now.getMonth());
+  const totalFinalMonths = totalWorkedMonthsAtStart + Math.max(0, monthsToAdd);
+  
+  const finalContribution = {
+    years: Math.floor(totalFinalMonths / 12),
+    months: totalFinalMonths % 12
+  };
+
+  // 6. ESCALA DE PORCENTAJE SOBRE BASE REGULADORA
+  // Importante: Aplicamos la escala sobre la cotización FINAL, no la de hoy.
+  let contributionPercentage = 0;
+  if (totalFinalMonths >= 180) { // 15 años mínimo para el 50%
+    contributionPercentage = 50;
+    const additionalMonths = totalFinalMonths - 180;
+    // Escala progresiva hasta el 100% (36 años y 6 meses = 438 meses)
+    const monthsNeededForFull = 438 - 180; 
+    const percentageIncrement = (additionalMonths / monthsNeededForFull) * 50;
+    contributionPercentage = Math.min(100, 50 + percentageIncrement);
+  }
+
+  // 7. Base Reguladora (Sistema Dual A vs B)
   const calcA_Bases = bases.slice(0, 25).reduce((acc, b) => acc + (b.base * 12), 0);
   const baseReguladoraA = calcA_Bases / 350;
 
@@ -93,9 +108,11 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
   const baseReguladoraB = calcB_Sum / 352.33;
 
   const genderGapSupplement = children > 0 ? children * 38 : 0;
+  const scaleMultiplier = contributionPercentage / 100;
 
-  let finalPensionA = baseReguladoraA * (1 - reductionPercentage) + delayBonus * baseReguladoraA + genderGapSupplement;
-  let finalPensionB = baseReguladoraB * (1 - reductionPercentage) + delayBonus * baseReguladoraB + genderGapSupplement;
+  // Cálculo final aplicando el multiplicador por años de cotización proyectados
+  let finalPensionA = (baseReguladoraA * scaleMultiplier) * (1 - reductionPercentage) + (delayBonus * baseReguladoraA) + genderGapSupplement;
+  let finalPensionB = (baseReguladoraB * scaleMultiplier) * (1 - reductionPercentage) + (delayBonus * baseReguladoraB) + genderGapSupplement;
 
   return {
     userName,
@@ -104,6 +121,9 @@ export const calculateRetirement = (data: UserData): CalculationResult => {
     targetAge,
     retirementDate,
     timeRemaining,
+    currentContribution: { years: totalYears, months: totalMonths },
+    finalContribution,
+    contributionPercentage,
     baseReguladoraA,
     baseReguladoraB,
     finalPensionA,
@@ -131,6 +151,9 @@ const createBlockedResult = (userName: string, reason: string): CalculationResul
   targetAge: { years: 0, months: 0 },
   retirementDate: '',
   timeRemaining: { years: 0, months: 0, days: 0 },
+  currentContribution: { years: 0, months: 0 },
+  finalContribution: { years: 0, months: 0 },
+  contributionPercentage: 0,
   baseReguladoraA: 0,
   baseReguladoraB: 0,
   finalPensionA: 0,

@@ -35,9 +35,9 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
 
   const [formData, setFormData] = React.useState<UserData>({
     userName: 'José Rodríguez Gómez',
-    birthDate: '1967-09-10',
-    totalYears: 41,
-    totalMonths: 5,
+    birthDate: '1970-09-10',
+    totalYears: 32,
+    totalMonths: 8,
     bases: initialBases,
     children: 0,
     modality: RetirementModality.ORDINARY,
@@ -78,6 +78,10 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+      <div className="border-b border-slate-100 pb-4 mb-4">
+        <h3 className="text-lg font-bold text-slate-800">Datos Personales</h3>
+      </div>
+      
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
         <div className="relative">
@@ -109,32 +113,37 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Años Cotizados</label>
-          <input 
-            type="number" name="totalYears" value={formData.totalYears} onChange={handleChange} min="0"
-            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Meses Adicionales</label>
-          <input 
-            type="number" name="totalMonths" value={formData.totalMonths} onChange={handleChange} min="0" max="11"
-            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-          />
+      <div className="border-t border-slate-100 pt-6 mt-6">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">Situación de Cotización Actual</h3>
+        <p className="text-xs text-slate-400 mb-4">Indica los años y meses que tienes acumulados en tu vida laboral a día de hoy.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Años Cotizados Hoy</label>
+            <input 
+              type="number" name="totalYears" value={formData.totalYears} onChange={handleChange} min="0"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Meses Adicionales Hoy</label>
+            <input 
+              type="number" name="totalMonths" value={formData.totalMonths} onChange={handleChange} min="0" max="11"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Modalidad de Jubilación</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Modalidad Deseada</label>
         <select 
           name="modality" value={formData.modality} onChange={handleChange}
           className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
         >
           <option value={RetirementModality.ORDINARY}>Ordinaria</option>
-          <option value={RetirementModality.ANTICIPATED_VOLUNTARY}>Anticipada Voluntaria (Max 24m)</option>
-          <option value={RetirementModality.ANTICIPATED_INVOLUNTARY}>Anticipada Involuntaria (Max 48m)</option>
+          <option value={RetirementModality.ANTICIPATED_VOLUNTARY}>Anticipada Voluntaria</option>
+          <option value={RetirementModality.ANTICIPATED_INVOLUNTARY}>Anticipada Involuntaria</option>
           <option value={RetirementModality.DELAYED}>Demorada (+4% anual)</option>
         </select>
       </div>
@@ -147,18 +156,16 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
             </label>
             <div className="flex gap-2">
               <button 
-                type="button"
-                onClick={() => setAnticipation(12)}
+                type="button" onClick={() => setAnticipation(12)}
                 className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${formData.anticipationMonths === 12 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
               >
-                12 Meses
+                12m
               </button>
               <button 
-                type="button"
-                onClick={() => setAnticipation(24)}
+                type="button" onClick={() => setAnticipation(24)}
                 className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${formData.anticipationMonths === 24 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
               >
-                24 Meses
+                24m
               </button>
             </div>
           </div>
@@ -170,20 +177,19 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
         </div>
       )}
 
-      <div className="pt-4">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+      <div className="pt-4 border-t border-slate-100">
+        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
           <i className="fa-solid fa-chart-line text-blue-600"></i>
-          Bases de Cotización (Últimos 29 años)
+          Historial de Bases (Últimos 29 años)
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-2 border border-slate-100 rounded-lg">
           {formData.bases.map((b, idx) => (
             <div key={b.year} className="bg-slate-50 p-2 rounded-md border border-transparent hover:border-blue-200 transition-colors">
-              <span className="text-[10px] uppercase font-bold text-slate-400">{b.year}</span>
+              <span className="text-[9px] uppercase font-black text-slate-400">{b.year}</span>
               <input 
-                type="number" 
-                value={b.base} 
+                type="number" value={b.base} 
                 onChange={(e) => handleBaseChange(idx, Number(e.target.value))}
-                className="w-full bg-transparent text-sm font-medium outline-none border-b border-transparent focus:border-blue-500"
+                className="w-full bg-transparent text-sm font-bold outline-none border-b border-transparent focus:border-blue-500"
               />
             </div>
           ))}
@@ -192,10 +198,10 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
 
       <button 
         type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 active:scale-95"
       >
         <i className="fa-solid fa-calculator"></i>
-        Actualizar Cálculo
+        CALCULAR JUBILACIÓN 2026
       </button>
     </form>
   );
