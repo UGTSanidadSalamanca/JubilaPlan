@@ -9,6 +9,16 @@ interface Props {
 }
 
 const ResultsView: React.FC<Props> = ({ result }) => {
+  // Local state for the interactive simulator inside results
+  const [simulatedMonths, setSimulatedMonths] = React.useState<number>(12);
+
+  React.useEffect(() => {
+    if (result && result.targetAge) {
+      // Initialize with whatever the user put in the form
+      // Note: This is just for the internal simulation card
+    }
+  }, [result]);
+
   const downloadPDF = () => {
     if (!result) return;
 
@@ -119,12 +129,17 @@ const ResultsView: React.FC<Props> = ({ result }) => {
     { name: 'Cálculo B (29a)', valor: Math.round(result.finalPensionB) },
   ];
 
-  // Logic to calculate anticipation scenarios on the fly for UI
-  const getScenarioPension = (months: number) => {
+  // Logic for the interactive simulator
+  const getSimulatedPension = (months: number) => {
     const baseReg = result.bestOption === 'A' ? result.baseReguladoraA : result.baseReguladoraB;
-    const reduction = (months / 24) * 0.21; // Estimate for voluntary 
+    // Simple linear approximation of reduction for UI feedback: max 21% at 24 months
+    const reduction = (months / 24) * 0.21; 
     return (baseReg * (1 - reduction)) + result.genderGapSupplement;
   };
+
+  const simulatedPension = getSimulatedPension(simulatedMonths);
+  const ordinaryPension = getSimulatedPension(0);
+  const costOfDecision = ordinaryPension - simulatedPension;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -190,6 +205,67 @@ const ResultsView: React.FC<Props> = ({ result }) => {
             </div>
           </div>
 
+          {/* Simulador Interactivo de Adelanto (Nuevo Selector) */}
+          <div className="bg-white p-6 rounded-3xl border-2 border-blue-50 shadow-sm relative">
+            <div className="flex items-center justify-between mb-6">
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                <i className="fa-solid fa-sliders text-blue-500"></i>
+                Simulador de Impacto por Adelanto
+              </h4>
+              <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded-lg uppercase">Interactuable</span>
+            </div>
+
+            <div className="space-y-8">
+              {/* Selector de Meses (Botones y Slider) */}
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
+                  <span>Adelanto: {simulatedMonths} meses</span>
+                  <span className="text-red-500">Recorte: -{((simulatedMonths / 24) * 21).toFixed(2)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="24" 
+                  value={simulatedMonths} 
+                  onChange={(e) => setSimulatedMonths(Number(e.target.value))}
+                  className="w-full h-3 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {[0, 6, 12, 18, 24].map(m => (
+                    <button 
+                      key={m}
+                      onClick={() => setSimulatedMonths(m)}
+                      className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${simulatedMonths === m ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-blue-300'}`}
+                    >
+                      {m === 0 ? 'Ordinaria' : `${m} meses`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Resultado de la simulación */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-900 text-white p-5 rounded-2xl flex flex-col justify-center">
+                  <p className="text-[9px] font-bold text-blue-400 uppercase mb-1">Pensión Estimada</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black">{simulatedPension.toFixed(2)}</span>
+                    <span className="text-lg font-bold">€</span>
+                  </div>
+                </div>
+                <div className="bg-red-50 border border-red-100 p-5 rounded-2xl flex flex-col justify-center">
+                  <p className="text-[9px] font-bold text-red-500 uppercase mb-1">Coste Mensual por Adelanto</p>
+                  <div className="flex items-baseline gap-2 text-red-600">
+                    <span className="text-2xl font-black">-{costOfDecision.toFixed(2)}</span>
+                    <span className="text-sm font-bold">€/mes</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-400 text-center italic">
+                * Valores basados en una aproximación lineal del coeficiente reductor voluntario para 2026.
+              </p>
+            </div>
+          </div>
+
           {/* Tarjetas de Indicadores */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:border-blue-200 transition-colors">
@@ -205,7 +281,7 @@ const ResultsView: React.FC<Props> = ({ result }) => {
             </div>
             <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-between hover:border-emerald-200 transition-colors">
               <div>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">Pensión Mensual Bruta</p>
+                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">Pensión Bruta Final (Actual)</p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
                     <i className="fa-solid fa-euro-sign"></i>
@@ -214,31 +290,6 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                     {result.bestOption === 'A' ? result.finalPensionA.toFixed(2) : result.finalPensionB.toFixed(2)} €
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Comparativa de Escenarios de Anticipación (Nuevo) */}
-          <div className="p-6 border border-slate-100 rounded-2xl bg-slate-50/50">
-            <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <i className="fa-solid fa-layer-group text-blue-500"></i>
-              Escenarios de Anticipación Voluntaria (Estimados)
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
-                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">24 Meses (Máx)</p>
-                <p className="text-lg font-black text-red-500">{getScenarioPension(24).toFixed(2)}€</p>
-                <p className="text-[8px] text-slate-400 font-bold uppercase mt-1">-21.00% recorte</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-blue-200 text-center shadow-sm">
-                <p className="text-[9px] font-bold text-blue-400 uppercase mb-1">12 Meses</p>
-                <p className="text-lg font-black text-blue-600">{getScenarioPension(12).toFixed(2)}€</p>
-                <p className="text-[8px] text-blue-400 font-bold uppercase mt-1">-10.50% recorte</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
-                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">0 Meses (Ordinaria)</p>
-                <p className="text-lg font-black text-emerald-600">{getScenarioPension(0).toFixed(2)}€</p>
-                <p className="text-[8px] text-emerald-500 font-bold uppercase mt-1">Sin recortes</p>
               </div>
             </div>
           </div>
