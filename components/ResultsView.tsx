@@ -55,6 +55,7 @@ const ResultsView: React.FC<Props> = ({ result }) => {
   const getSimulatedPension = (months: number) => {
     const baseReg = result.bestOption === 'A' ? result.baseReguladoraA : result.baseReguladoraB;
     const percScale = result.contributionPercentage / 100;
+    // Coeficiente reductor aproximado según meses (máx 21% a 24 meses)
     const reduction = (months / 24) * 0.21; 
     return (baseReg * percScale * (1 - reduction)) + result.genderGapSupplement;
   };
@@ -62,6 +63,7 @@ const ResultsView: React.FC<Props> = ({ result }) => {
   const simulatedPension = getSimulatedPension(simulatedMonths);
   const ordinaryPension = getSimulatedPension(0);
   const costOfDecision = ordinaryPension - simulatedPension;
+  const currentSimulatedReductionPerc = (simulatedMonths / 24) * 21;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -106,7 +108,7 @@ const ResultsView: React.FC<Props> = ({ result }) => {
             </div>
           </div>
 
-          {/* Hoja de Ruta de Cotización Corregida */}
+          {/* Hoja de Ruta de Cotización */}
           <div className="bg-white p-6 rounded-3xl border-2 border-slate-50 shadow-sm">
             <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
               <i className="fa-solid fa-road text-blue-500"></i>
@@ -125,7 +127,7 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                 </div>
               </div>
 
-              {/* Bloque 2: Tiempo que resta (Simbolizado como suma) */}
+              {/* Bloque 2: Tiempo que resta */}
               <div className="flex items-center gap-4 bg-blue-50 p-4 rounded-2xl border border-blue-100 ml-4">
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-200">
                   <i className="fa-solid fa-plus"></i>
@@ -151,42 +153,52 @@ const ResultsView: React.FC<Props> = ({ result }) => {
                 </div>
               </div>
             </div>
-            
-            <div className="mt-8">
-               <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase mb-2">
-                 <span>Progreso de carrera</span>
-                 <span>{result.contributionPercentage.toFixed(1)}% de pensión</span>
-               </div>
-               <div className="h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                 <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, (result.currentContribution.years / 36.5) * 100)}%` }}></div>
-                 <div className="h-full bg-blue-300" style={{ width: `${Math.min(100 - (result.currentContribution.years / 36.5) * 100, (result.timeRemaining.years / 36.5) * 100)}%` }}></div>
-               </div>
-               <p className="text-[9px] text-slate-400 mt-2 text-center italic">
-                 Has completado el {((result.currentContribution.years / result.finalContribution.years) * 100).toFixed(0)}% de tu carrera proyectada.
-               </p>
-            </div>
           </div>
 
-          {/* Simulador Interactivo */}
+          {/* Simulador Interactivo con Visualización de Rebaja */}
           <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
-            <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <i className="fa-solid fa-sliders text-blue-500"></i>
-              Impacto de Anticipación Interactivo
-            </h4>
-            <div className="space-y-4">
-              <input 
-                type="range" min="0" max="24" value={simulatedMonths} 
-                onChange={(e) => setSimulatedMonths(Number(e.target.value))}
-                className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-900 text-white p-4 rounded-2xl text-center">
-                  <p className="text-[9px] font-bold text-blue-400 uppercase mb-1">Pensión a {simulatedMonths}m</p>
-                  <p className="text-2xl font-black">{simulatedPension.toFixed(2)}€</p>
+            <div className="flex items-center justify-between mb-6">
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                <i className="fa-solid fa-sliders text-blue-500"></i>
+                Simulador de Impacto por Anticipación
+              </h4>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm border ${simulatedMonths > 0 ? 'bg-red-100 text-red-600 border-red-200' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
+                {simulatedMonths > 0 ? `Rebaja: -${currentSimulatedReductionPerc.toFixed(2)}%` : 'Sin recortes'}
+              </span>
+            </div>
+
+            <div className="space-y-6">
+              <div className="relative pt-1">
+                <div className="flex mb-2 items-center justify-between">
+                  <div className="text-[10px] font-bold text-slate-400">0 meses</div>
+                  <div className="text-sm font-black text-slate-700">{simulatedMonths} meses antes</div>
+                  <div className="text-[10px] font-bold text-slate-400">24 meses</div>
                 </div>
-                <div className="bg-white border border-red-100 p-4 rounded-2xl text-center">
-                  <p className="text-[9px] font-bold text-red-500 uppercase mb-1">Diferencia Mensual</p>
-                  <p className="text-2xl font-black text-red-600">-{costOfDecision.toFixed(2)}€</p>
+                <input 
+                  type="range" min="0" max="24" value={simulatedMonths} 
+                  onChange={(e) => setSimulatedMonths(Number(e.target.value))}
+                  className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-4"
+                />
+                
+                {/* Visualizador de Porcentaje de Rebaja */}
+                <div className="h-4 w-full bg-slate-200 rounded-full overflow-hidden flex mb-6">
+                   <div 
+                    className="h-full bg-red-500 transition-all duration-300 ease-out" 
+                    style={{ width: `${(currentSimulatedReductionPerc / 21) * 100}%` }}
+                   ></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-900 text-white p-5 rounded-2xl text-center shadow-xl">
+                  <p className="text-[9px] font-bold text-blue-400 uppercase mb-1 tracking-widest">Pensión Estimada</p>
+                  <p className="text-3xl font-black">{simulatedPension.toFixed(2)}€</p>
+                  <p className="text-[10px] text-slate-400 mt-1 italic">Con adelanto de {simulatedMonths}m</p>
+                </div>
+                <div className="bg-white border-2 border-red-100 p-5 rounded-2xl text-center shadow-sm">
+                  <p className="text-[9px] font-bold text-red-500 uppercase mb-1 tracking-widest">Pérdida de Poder</p>
+                  <p className="text-3xl font-black text-red-600">-{costOfDecision.toFixed(2)}€</p>
+                  <p className="text-[10px] text-red-400 mt-1 font-bold">-{currentSimulatedReductionPerc.toFixed(1)}% mensual</p>
                 </div>
               </div>
             </div>
