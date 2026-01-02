@@ -2,6 +2,7 @@
 import React from 'react';
 import { UserData, RetirementModality, ContributionBase } from '../types.ts';
 
+// Enlace directo corregido para Google Drive usando el ID proporcionado
 const UGT_LOGO_URL = "https://drive.google.com/uc?export=view&id=1z6Rd1Tj_s1LUuLYfuKrQK7W4AdEqmT2w";
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
   const [currentBase, setCurrentBase] = React.useState<number>(2081);
   const [formData, setFormData] = React.useState<UserData>({
-    userName: 'Tu Nombre Aquí',
+    userName: 'Trabajador/a Sanidad',
     birthDate: '1967-09-10',
     totalYears: 34,
     totalMonths: 5,
@@ -45,7 +46,6 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
   const isAnticipated = formData.modality === RetirementModality.ANTICIPATED_VOLUNTARY || formData.modality === RetirementModality.ANTICIPATED_INVOLUNTARY;
   const maxAnt = formData.modality === RetirementModality.ANTICIPATED_VOLUNTARY ? 24 : 48;
 
-  // Cálculo rápido del porcentaje para el feedback visual en el form
   const getPreviewReduction = () => {
     if (formData.modality === RetirementModality.ANTICIPATED_VOLUNTARY) {
       return (formData.anticipationMonths! / 24) * 21;
@@ -73,7 +73,15 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">UGT Sanidad Salamanca</p>
           </div>
         </div>
-        <img src={UGT_LOGO_URL} alt="UGT Logo" className="h-10 w-auto opacity-100" />
+        <img 
+          src={UGT_LOGO_URL} 
+          alt="UGT Logo" 
+          className="h-10 w-auto opacity-100 object-contain"
+          onError={(e) => {
+            // Fallback a logo oficial si el de Drive falla
+            (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Logo_UGT.svg/1024px-Logo_UGT.svg.png";
+          }}
+        />
       </div>
 
       <div className="space-y-6 relative z-10">
@@ -113,7 +121,7 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
               className="w-full bg-transparent text-3xl font-black text-center outline-none focus:text-red-400 transition-colors"
              />
              <p className="text-[9px] text-slate-400 mt-2 text-center italic font-medium px-4">
-                Usa tu base actual de nómina. UGT la proyectará para el cálculo dual.
+                Usa tu base actual de nómina. UGT proyectará el cálculo dual.
              </p>
           </div>
         </div>

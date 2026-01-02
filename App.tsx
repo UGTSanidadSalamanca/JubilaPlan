@@ -5,7 +5,7 @@ import { calculateRetirement } from './services/retirementLogic.ts';
 import RetirementForm from './components/RetirementForm.tsx';
 import ResultsView from './components/ResultsView.tsx';
 
-// Enlace directo convertido desde Google Drive para visualización correcta
+// Enlace directo corregido para Google Drive usando el ID proporcionado
 const UGT_LOGO_URL = "https://drive.google.com/uc?export=view&id=1z6Rd1Tj_s1LUuLYfuKrQK7W4AdEqmT2w";
 
 const App: React.FC = () => {
@@ -24,7 +24,17 @@ const App: React.FC = () => {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={UGT_LOGO_URL} alt="UGT Sanidad Salamanca" className="h-14 w-auto object-contain" />
+            <div className="flex items-center justify-center bg-white p-1 rounded-lg">
+              <img 
+                src={UGT_LOGO_URL} 
+                alt="UGT Sanidad Salamanca" 
+                className="h-12 w-auto object-contain"
+                onError={(e) => {
+                  // Fallback a logo oficial si el de Drive falla por permisos o CORS
+                  (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Logo_UGT.svg/1024px-Logo_UGT.svg.png";
+                }}
+              />
+            </div>
             <div className="h-10 w-[1px] bg-slate-200 hidden md:block"></div>
             <div className="flex flex-col">
               <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-red-800 leading-none">
@@ -38,7 +48,7 @@ const App: React.FC = () => {
           <nav className="hidden lg:flex gap-8 text-xs font-bold text-slate-500 uppercase tracking-widest">
             <span className="text-red-600 border-b-2 border-red-600 pb-1 cursor-default">Simulador Dual</span>
             <a href="https://www.seg-social.es" target="_blank" rel="noopener noreferrer" className="hover:text-red-600 transition-colors">Seguridad Social</a>
-            <a href="#" className="hover:text-red-600 transition-colors">Contacto Sindical</a>
+            <a href="#" className="hover:text-red-600 transition-colors">Soporte Afiliados</a>
           </nav>
         </div>
       </header>
@@ -104,14 +114,14 @@ const App: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 text-sm border-b border-slate-800 pb-12 mb-12">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-3 mb-6">
-                <img src={UGT_LOGO_URL} alt="UGT" className="h-12 brightness-0 invert opacity-90" />
+                <img src={UGT_LOGO_URL} alt="UGT" className="h-10 brightness-0 invert opacity-90" onError={(e) => { (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Logo_UGT.svg/1024px-Logo_UGT.svg.png"; }} />
                 <div className="flex flex-col">
                   <span className="text-white font-black text-lg leading-none">UGT Sanidad</span>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Salamanca</span>
                 </div>
               </div>
               <p className="max-w-md leading-relaxed text-slate-400">
-                Comprometidos con la transparencia y la defensa de los derechos de los profesionales de la salud. Esta herramienta es parte de nuestro servicio de apoyo al afiliado y trabajador.
+                Comprometidos con la transparencia y la defensa de los derechos de los profesionales de la salud. Esta herramienta es parte de nuestro servicio de apoyo al afiliado y trabajador de la provincia de Salamanca.
               </p>
             </div>
             <div>
@@ -127,7 +137,7 @@ const App: React.FC = () => {
               <p className="font-bold text-white mb-2">UGT Salamanca</p>
               <p className="leading-relaxed mb-4">Servicios Jurídicos y Delegados de Sanidad.</p>
               <div className="text-red-500 font-black text-xs uppercase tracking-tighter">
-                Contacto Sindical en Salamanca
+                Especialistas en Sanidad
               </div>
             </div>
           </div>

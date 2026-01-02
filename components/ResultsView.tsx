@@ -125,7 +125,7 @@ const ResultsView: React.FC<Props> = ({ result, originalData }) => {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                Cálculo Sindical UGT
+                Cálculo
               </span>
             </div>
             <h2 className="text-7xl font-black text-slate-900 flex items-baseline gap-2 leading-none">
