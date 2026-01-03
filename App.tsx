@@ -45,7 +45,14 @@ const App: React.FC = () => {
           </div>
           <nav className="hidden lg:flex gap-8 text-xs font-bold text-slate-500 uppercase tracking-widest">
             <span className="text-red-600 border-b-2 border-red-600 pb-1 cursor-default">Simulador Dual</span>
-            <a href="https://www.seg-social.es" target="_blank" rel="noopener noreferrer" className="hover:text-red-600 transition-colors">Sede Electrónica</a>
+            <a 
+              href="https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-red-600 transition-colors"
+            >
+              Sede Electrónica
+            </a>
           </nav>
         </div>
       </header>
@@ -99,7 +106,14 @@ const App: React.FC = () => {
             <span>© 2026 UGT Sanidad Salamanca</span>
             <div className="flex gap-6">
               <a href="#" className="hover:text-white transition-colors">Privacidad</a>
-              <a href="#" className="hover:text-white transition-colors">Contacto Afiliados</a>
+              <a 
+                href="https://sites.google.com/view/ugt-sanidad-salamanca/inicio/contacto?authuser=0" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hover:text-white transition-colors"
+              >
+                Contacto Afiliados
+              </a>
             </div>
           </div>
         </div>
