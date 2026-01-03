@@ -36,7 +36,7 @@ export interface CalculationResult {
   timeRemaining: { years: number; months: number; days: number };
   currentContribution: { years: number; months: number };
   finalContribution: { years: number; months: number };
-  contributionPercentage: number; // Porcentaje de la base reguladora según años (50%-100%)
+  contributionPercentage: number;
   baseReguladoraA: number;
   baseReguladoraB: number;
   finalPensionA: number;
@@ -47,4 +47,10 @@ export interface CalculationResult {
   delayBonus?: number;
   modality: RetirementModality;
   anticipationMonths?: number;
+  // Campo para la comparativa
+  ordinaryComparison?: {
+    pension: number;
+    date: string;
+    diffMonthly: number;
+  };
 }
