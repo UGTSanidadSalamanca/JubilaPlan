@@ -2,8 +2,8 @@
 import React from 'react';
 import { UserData, RetirementModality, ContributionBase } from '../types.ts';
 
-// Enlace directo corregido para Google Drive usando el ID proporcionado
-const UGT_LOGO_URL = "https://drive.google.com/uc?export=view&id=1z6Rd1Tj_s1LUuLYfuKrQK7W4AdEqmT2w";
+// Nueva dirección del logo proporcionada por el usuario
+const UGT_LOGO_URL = "https://scontent-mad2-1.xx.fbcdn.net/v/t39.30808-6/484583121_1041730604663532_8021505965400259448_n.jpg?_nc_cat=108&cb2=99be929b-bd9a46d7&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=EIh0PGLg6PEQ7kNvwETx6wd&_nc_oc=AdlF6-0M239zk5jBH8peONssl7G7ej5ekZc9HhTEh9cV97vz1LC21qYnLKqR2GxIedw&_nc_zt=23&_nc_ht=scontent-mad2-1.xx&_nc_gid=wEsrwymv9XFwb9iBY3a7pA&oh=00_Afpm0-qPPzRA9zXQEkDhM7guQmD4mOq82lnSvI8FhXcycg&oe=695E8DDB";
 
 interface Props {
   onCalculate: (data: UserData) => void;
@@ -76,9 +76,9 @@ const RetirementForm: React.FC<Props> = ({ onCalculate }) => {
         <img 
           src={UGT_LOGO_URL} 
           alt="UGT Logo" 
-          className="h-10 w-auto opacity-100 object-contain"
+          className="h-14 w-auto opacity-100 object-contain rounded-lg shadow-sm border border-slate-50"
           onError={(e) => {
-            // Fallback a logo oficial si el de Drive falla
+            // Fallback a logo oficial
             (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Logo_UGT.svg/1024px-Logo_UGT.svg.png";
           }}
         />
