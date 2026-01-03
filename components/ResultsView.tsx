@@ -100,7 +100,7 @@ const ResultsView: React.FC<Props> = ({ result, originalData }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
           <div>
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 block">Pensión Proyectada</span>
-            <h2 className="text-7xl font-black text-slate-900 flex items-baseline gap-2 leading-none">
+            <h2 className="text-6xl font-black text-slate-900 flex items-baseline gap-2 leading-none">
               {bestPension.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               <span className="text-3xl font-bold text-slate-300">€</span>
             </h2>
@@ -108,18 +108,19 @@ const ResultsView: React.FC<Props> = ({ result, originalData }) => {
                <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Modalidad elegida</span>
             </div>
           </div>
-          <div className="text-right flex flex-col items-end">
-            <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 mb-6 w-full md:w-auto">
+          <div className="text-right flex flex-col items-end gap-3">
+            <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 mb-2 w-full md:w-auto">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tu fecha de salida</p>
               <p className="text-2xl font-black text-red-600 mb-1">{result.retirementDate}</p>
               <p className="text-[10px] font-bold text-slate-400 uppercase">{result.targetAge.years} años y {result.targetAge.months} meses</p>
             </div>
+            
             <button 
               onClick={generatePDF}
-              className="flex items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-red-700 transition-all shadow-xl active:scale-95 group"
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-[11px] uppercase tracking-wider hover:bg-red-700 transition-all shadow-xl active:scale-95 group"
             >
               <i className="fa-solid fa-file-pdf text-red-400 group-hover:text-white transition-colors"></i>
-              Generar Informe Completo
+              Descargar Informe Completo (PDF)
             </button>
           </div>
         </div>
@@ -129,7 +130,7 @@ const ResultsView: React.FC<Props> = ({ result, originalData }) => {
       {result.ordinaryComparison && (
         <div className="bg-white border-2 border-red-100 rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4">
-             <i className="fa-solid fa-scale-unbalanced-flip text-red-100 text-6xl"></i>
+             <i className="fa-solid fa-scale-unbalanced-flip text-red-100 text-6xl opacity-50"></i>
           </div>
           <h4 className="text-sm font-black text-red-600 uppercase tracking-widest mb-6 flex items-center gap-3">
              <i className="fa-solid fa-triangle-exclamation"></i>

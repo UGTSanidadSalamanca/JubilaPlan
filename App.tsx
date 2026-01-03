@@ -6,6 +6,7 @@ import RetirementForm from './components/RetirementForm.tsx';
 import ResultsView from './components/ResultsView.tsx';
 
 const UGT_LOGO_URL = "https://scontent-mad2-1.xx.fbcdn.net/v/t39.30808-6/484583121_1041730604663532_8021505965400259448_n.jpg?_nc_cat=108&cb2=99be929b-bd9a46d7&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=EIh0PGLg6PEQ7kNvwETx6wd&_nc_oc=AdlF6-0M239zk5jBH8peONssl7G7ej5ekZc9HhTEh9cV97vz1LC21qYnLKqR2GxIedw&_nc_zt=23&_nc_ht=scontent-mad2-1.xx&_nc_gid=wEsrwymv9XFwb9iBY3a7pA&oh=00_Afpm0-qPPzRA9zXQEkDhM7guQmD4mOq82lnSvI8FhXcycg&oe=695E8DDB";
+const CONTACT_URL = "https://sites.google.com/view/ugt-sanidad-salamanca/inicio/contacto?authuser=0";
 
 const App: React.FC = () => {
   const [result, setResult] = React.useState<CalculationResult | null>(null);
@@ -43,15 +44,22 @@ const App: React.FC = () => {
               </span>
             </div>
           </div>
-          <nav className="hidden lg:flex gap-8 text-xs font-bold text-slate-500 uppercase tracking-widest">
-            <span className="text-red-600 border-b-2 border-red-600 pb-1 cursor-default">Simulador Dual</span>
+          <nav className="flex items-center gap-8">
             <a 
               href="https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="hover:text-red-600 transition-colors"
+              className="text-xs font-bold text-slate-500 uppercase tracking-widest hover:text-red-600 transition-colors"
             >
               Sede Electrónica
+            </a>
+            <a 
+              href={CONTACT_URL}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-red-600 transition-colors"
+            >
+              Contacto
             </a>
           </nav>
         </div>
@@ -87,7 +95,7 @@ const App: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-start gap-8 border-b border-slate-800 pb-8 mb-8">
             <div className="max-w-md">
               <div className="flex items-center gap-3 mb-4">
-                <img src={UGT_LOGO_URL} alt="UGT" className="h-10 rounded shadow-md grayscale" />
+                <img src={UGT_LOGO_URL} alt="UGT" className="h-10 rounded shadow-md grayscale contrast-125" />
                 <span className="text-white font-black uppercase tracking-widest text-xs">UGT Sanidad Salamanca</span>
               </div>
               <p className="text-xs leading-relaxed">
@@ -96,9 +104,9 @@ const App: React.FC = () => {
             </div>
             <div className="flex gap-12">
               <div>
-                <h5 className="text-white font-black mb-4 uppercase tracking-widest text-[10px]">Salamanca</h5>
+                <h5 className="text-white font-black mb-4 uppercase tracking-widest text-[10px]">Asesoramiento</h5>
                 <p className="text-xs">Servicios Jurídicos</p>
-                <p className="text-xs text-red-500 font-bold">Especialistas en Sanidad</p>
+                <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="text-xs text-red-500 font-bold hover:underline">Solicitar información técnica</a>
               </div>
             </div>
           </div>
@@ -107,12 +115,12 @@ const App: React.FC = () => {
             <div className="flex gap-6">
               <a href="#" className="hover:text-white transition-colors">Privacidad</a>
               <a 
-                href="https://sites.google.com/view/ugt-sanidad-salamanca/inicio/contacto?authuser=0" 
+                href={CONTACT_URL} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="hover:text-white transition-colors"
               >
-                Contacto Afiliados
+                Página de Contacto
               </a>
             </div>
           </div>
