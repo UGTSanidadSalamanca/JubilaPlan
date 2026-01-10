@@ -2,11 +2,9 @@
 import React from 'react';
 import { UserData, CalculationResult } from './types.ts';
 import { calculateRetirement } from './services/retirementLogic.ts';
+import { UGT_LOGO_URL, UGT_FALLBACK_LOGO, CONTACT_URL, SEDE_ELECTRONICA_URL } from './constants.ts';
 import RetirementForm from './components/RetirementForm.tsx';
 import ResultsView from './components/ResultsView.tsx';
-
-const UGT_LOGO_URL = "https://scontent-mad2-1.xx.fbcdn.net/v/t39.30808-6/484583121_1041730604663532_8021505965400259448_n.jpg?_nc_cat=108&cb2=99be929b-bd9a46d7&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=EIh0PGLg6PEQ7kNvwETx6wd&_nc_oc=AdlF6-0M239zk5jBH8peONssl7G7ej5ekZc9HhTEh9cV97vz1LC21qYnLKqR2GxIedw&_nc_zt=23&_nc_ht=scontent-mad2-1.xx&_nc_gid=wEsrwymv9XFwb9iBY3a7pA&oh=00_Afpm0-qPPzRA9zXQEkDhM7guQmD4mOq82lnSvI8FhXcycg&oe=695E8DDB";
-const CONTACT_URL = "https://sites.google.com/view/ugt-sanidad-salamanca/inicio/contacto?authuser=0";
 
 const App: React.FC = () => {
   const [result, setResult] = React.useState<CalculationResult | null>(null);
@@ -30,7 +28,7 @@ const App: React.FC = () => {
                 alt="UGT Sanidad Salamanca" 
                 className="h-14 w-auto object-contain transition-transform hover:scale-105 duration-300"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Logo_UGT.svg/1024px-Logo_UGT.svg.png";
+                  (e.target as HTMLImageElement).src = UGT_FALLBACK_LOGO;
                 }}
               />
             </div>
@@ -46,7 +44,7 @@ const App: React.FC = () => {
           </div>
           <nav className="flex items-center gap-8">
             <a 
-              href="https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio" 
+              href={SEDE_ELECTRONICA_URL} 
               target="_blank" 
               rel="noopener noreferrer" 
               className="text-xs font-bold text-slate-500 uppercase tracking-widest hover:text-red-600 transition-colors"
@@ -95,7 +93,14 @@ const App: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-start gap-8 border-b border-slate-800 pb-8 mb-8">
             <div className="max-w-md">
               <div className="flex items-center gap-3 mb-4">
-                <img src={UGT_LOGO_URL} alt="UGT" className="h-10 rounded shadow-md grayscale contrast-125" />
+                <img 
+                  src={UGT_LOGO_URL} 
+                  alt="UGT" 
+                  className="h-10 rounded shadow-md grayscale contrast-125" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = UGT_FALLBACK_LOGO;
+                  }}
+                />
                 <span className="text-white font-black uppercase tracking-widest text-xs">UGT Sanidad Salamanca</span>
               </div>
               <p className="text-xs leading-relaxed">

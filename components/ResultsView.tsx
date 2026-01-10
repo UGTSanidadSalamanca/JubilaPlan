@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { CalculationResult, RetirementModality, UserData } from '../types.ts';
+import { UGT_LOGO_URL, UGT_FALLBACK_LOGO } from '../constants.ts';
 import { jsPDF } from 'jspdf';
 
 interface Props {
@@ -26,6 +27,7 @@ const ResultsView: React.FC<Props> = ({ result, originalData }) => {
     const margin = 20;
     let y = 20;
 
+    // Decoración lateral roja
     doc.setFillColor(220, 38, 38);
     doc.rect(0, 0, 10, 297, 'F');
 
